@@ -60,7 +60,7 @@ def ABX(feature_function,
     # Output
     scores = {}
     
-    # ABX within context
+    # ABX calculations differ per context mode
     for contextmode in contextmodes:
         
         # ABXDataset at present depends on the contextmode
