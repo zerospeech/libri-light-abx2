@@ -45,21 +45,22 @@ def load_item_file(path_item_file):
 
     for line in data:
         items = line.split()
-        assert(len(items) == 7)
+        assert(len(items) == 7)  # assumes 7-column files
         fileID = items[0]
         if fileID not in out:
             out[fileID] = []
 
         onset, offset = float(items[1]), float(items[2])
-        context = '+'.join([items[4], items[5]])
         phone = items[3]
+        
         speaker = items[6]
+        context = '+'.join([items[4], items[5]])
 
         if phone not in phone_match:
             s = len(phone_match)
             phone_match[phone] = s
         phone_id = phone_match[phone]
-
+        
         if context not in context_match:
             s = len(context_match)
             context_match[context] = s
@@ -239,6 +240,8 @@ class ABXFeatureLoader:
             return ABXWithinGroupIterator(self, max_size_group)
         if mode == 'across':
             return ABXAcrossGroupIterator(self, max_size_group)
+        if mode == 'any':
+            raise ValueError(f"Mode not yet supported: {mode}")
         raise ValueError(f"Invalid mode: {mode}")
 
 
@@ -263,6 +266,7 @@ class ABXIterator:
         max_size = 0
         to_take = list(range(i_start, i_end))
         if i_end - i_start > self.max_size_group:
+            random.seed(42)
             to_take = random.sample(to_take, k=self.max_size_group)
         for i in to_take:
             loc_data, loc_size, loc_id = self.dataset[self.index_csp[i]]
@@ -304,7 +308,7 @@ class ABXWithinGroupIterator(ABXIterator):
                                                      max_size_group)
         self.symmetric = True
 
-        for context_group in self.groups_csp:
+        for context_group in self.groups_csp: # always within context
             for speaker_group in context_group:
                 if len(speaker_group) > 1:
                     for i_start, i_end in speaker_group:
