@@ -22,8 +22,9 @@ import numpy as np
 import pandas
 import joblib
 
-from zerospeech2021 import exception
-from zerospeech2021.phonetic_eval import eval_ABX
+# from zerospeech2021 import exception
+# from zerospeech2021.phonetic_eval import eval_ABX
+import eval_ABX
 
 LIBRISPEECH_SETS = {
     'dev': ['dev-clean', 'dev-other'],
