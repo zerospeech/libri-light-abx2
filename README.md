@@ -24,26 +24,21 @@ The code is reworked to accomodate context modes. On the user side, this paralle
 
 ## What this will be
 
-At present, `abx_revamped` is a Frankenstein assembly of two sub-versions of the ABX evaluation. Rather than truly streamline the approach to {within, across, any} for any variable, it picks and chooses some combinations, so not all are available. ("any" is only available for contexts, "across" only for speakers, therefore we get 2x2 = 4 total mode combinations).
+At present, `abx_revamped` is a Frankenstein assembly of two sub-versions of the ABX evaluation. Rather than truly streamline the approach to {within, across, any} for any variable, it picks and chooses some combinations, so not all are available. "any" is only available as a context mode, "across" is only available as a speaker mode; therefore we get {within, across} x {within, any} = 4 possible mode combinations.
 
 Right now, the `phone_abx_iterators` code disregards context entirely, hence being called "any" context, while the fundamental `abx_iterators` code only varies for speaker modes and always operates "within" context. 
 Neither version has "across context" code, nor does either version have "any speaker" code.
 
 To add these missing options, the ABX evaluation will need a more thorough tearing down.
-The [within context] "across" vs "within" speaker mechanism is written out quite well already. The simplest modification would swap "speaker" and "context" at will, so it could be modified for "across context", but would necessarily need to be [within speaker]. It would not cover "across speaker"+"across context".
-The "any" speaker option would need to be added into `abx_iterators`, ideally applicable to either the speaker or the context variable.
 
-The result should be a neat 3x3 option: {within, across, any} x {within, across, any}. 
+The {within} context x {across, within} speaker mechanism is written out in the ZS2021 ABX (without specifying context as a variable - just setting context to permanent "within"). The simplest modification would generalise this mechanism to "within X, within/across Y", allowing "within speaker"+"across context".
+Likewise, the {any} context mechanism is written out for {across, within} speaker in phone_ABX, setting context to permanent "any". This too could be generalised to "any X, within/across Y", allowing the "any speaker"+"within/across context" combinations.
+Finally, the "across speaker"+"across context" and "any speaker"+"any context" combinations will need to be written up specially for this `abx_revamped` evaluation.
 
+The result should be a neat 3x3, handled by different Iterator classes in abx_iterators:
+     {within, across, any} x {within, across, any}
+     * {within} x {within, across} (ABXWithinWithinGroupIterator, ABXWithinAcrossGroupIterator)
+     * {any} x {within, across} (ABXAnyWithinGroupIterator, ABXAnyAcrossGroupIterator)
+     * {across} x {across} (ABXAcrossAcrossGroupIterator)
+     * {any} x {any} (ABXAnyAnyGroupIterator)
 
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab.cognitive-ml.fr/alyashenko/abx_revamped.git
-git branch -M main
-git push -uf origin main
-```
