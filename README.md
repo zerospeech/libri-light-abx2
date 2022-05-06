@@ -36,10 +36,10 @@ Likewise, the {any} context mechanism is written out for {across, within} speake
 Finally, the "across speaker"+"across context" and "any speaker"+"any context" combinations will need to be written up specially for this `abx_revamped` evaluation.  
 
 The result should be a neat 3x3, handled by different Iterator classes in abx_iterators:  
-     `{within, across, any}` x `{within, across, any}`  
+`{within, across, any}` x `{within, across, any}`  
        
-     * {within} x {within, across} (ABXWithinWithinGroupIterator, ABXWithinAcrossGroupIterator)
-     * {any} x {within, across} (ABXAnyWithinGroupIterator, ABXAnyAcrossGroupIterator)
-     * {across} x {across} (ABXAcrossAcrossGroupIterator)
-     * {any} x {any} (ABXAnyAnyGroupIterator)
+* {within} x {within, across} (ABXWithinWithinGroupIterator, ABXWithinAcrossGroupIterator)  
+* {any} x {within, across} (ABXAnyWithinGroupIterator, ABXAnyAcrossGroupIterator)  
+* {across} x {across} (ABXAcrossAcrossGroupIterator)  
+* {any} x {any} (ABXAnyAnyGroupIterator)
 
