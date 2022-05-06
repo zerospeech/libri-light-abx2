@@ -1,5 +1,6 @@
 """Evaluation program for ZR2021 submissions"""
-"""(Modified for only phonetic evaluation, and to accept CPC checkpoints)"""
+"""(Modified for only phonetic evaluation, and in the process of
+    being changed around to accept CPC checkpoints in the future)"""
 
 import atexit
 import os
