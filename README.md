@@ -31,11 +31,11 @@ Neither version has "across context" code, nor does either version have "any spe
 
 To add these missing options, the ABX evaluation will need a more thorough tearing down.
 
-The {within} context x {across, within} speaker mechanism is written out in the ZS2021 ABX (without specifying context as a variable - just setting context to permanent "within"). The simplest modification would generalise this mechanism to "within X, within/across Y", allowing "within speaker"+"across context".
-Likewise, the {any} context mechanism is written out for {across, within} speaker in phone_ABX, setting context to permanent "any". This too could be generalised to "any X, within/across Y", allowing the "any speaker"+"within/across context" combinations.
-Finally, the "across speaker"+"across context" and "any speaker"+"any context" combinations will need to be written up specially for this `abx_revamped` evaluation.
+The {within} context x {across, within} speaker mechanism is written out in the ZS2021 ABX (without specifying context as a variable - just setting context to permanent "within"). The simplest modification would generalise this mechanism to "within X, within/across Y", allowing "within speaker"+"across context".  
+Likewise, the {any} context mechanism is written out for {across, within} speaker in phone_ABX, setting context to permanent "any". This too could be generalised to "any X, within/across Y", allowing the "any speaker"+"within/across context" combinations.  
+Finally, the "across speaker"+"across context" and "any speaker"+"any context" combinations will need to be written up specially for this `abx_revamped` evaluation.  
 
-The result should be a neat 3x3, handled by different Iterator classes in abx_iterators:
+The result should be a neat 3x3, handled by different Iterator classes in abx_iterators:  
      {within, across, any} x {within, across, any}
      * {within} x {within, across} (ABXWithinWithinGroupIterator, ABXWithinAcrossGroupIterator)
      * {any} x {within, across} (ABXAnyWithinGroupIterator, ABXAnyAcrossGroupIterator)
