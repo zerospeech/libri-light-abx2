@@ -1,6 +1,45 @@
 # ABX_revamped
 
-The ABX phonetic evaluation as used by ZeroSpeech challenge, in the process of being revamped to add "context-type" options (on-triphone, within-context, any-context).
+The ABX phonetic evaluation as used by ZeroSpeech challenge, in the process of being revamped to add "context-type" options (on-triphone, within-context, any-context).  
+  
+### Requirements?  
+  
+The requirements for this are the same as for ZS2021 - the environment "zr2021-eval" should be available (???) through oberon, which should include the CPC loading nightmare
+
+### How to use this for CPC checkpoints?
+
+The ZS Challenge ABX evaluation is scattered across three layers: `evaluate.py` specifies the dataset (dev/test), `phonetic.py` specifies the subdataset (clean/other), and once that info is combined, `eval_ABX.py` can take the specific dataset-subdataset combination and runs the ABX evaluation on specified speaker and context modes. 
+
+At present, the ZS version of ABX doesn't accept CPC checkpoints at the upper two layers (`evaluate.py` or `phonetic.py`).  
+`eval_ABX.py` on its own *does* accept CPC checkpoints - this is just not carried up through the other two layers.  
+The short-term solution for this intermediate "revamping" step is, basically, **to run `eval_ABX.py` four times**: one for each of the dataset-subdataset combinations, `{dev, test} x {clean, other}`.  
+  
+To run `eval_ABX.py` in isolation from its outer layers, you will need to give it the following arguments:  
+  
+* `path_data`: path to the data, directory of flac files in this case - there are 4 of these  
+    * /scratch1/data/raw_data/LibriSpeech/dev-clean/
+    * /scratch1/data/raw_data/LibriSpeech/dev-other/
+    * /scratch1/data/raw_data/LibriSpeech/test-clean/
+    * /scratch1/data/raw_data/LibriSpeech/test-other/
+* `path_item_file`: path to the location of a corresponding textfile - there are accordingly 4 of these as well
+    * /scratch2/alyashenko/item_from_alignment/dev-clean/dev-clean.item
+    * /scratch2/alyashenko/item_from_alignment/dev-other/dev-other.item
+    * /scratch2/alyashenko/item_from_alignment/test-clean/test-clean.item
+    * /scratch2/alyashenko/item_from_alignment/test-other/test-other.item  
+* **the two above arguments must match when passed to eval_ABX: dev-clean with dev-clean, test-other with test-other, etc.**
+* `path_checkpoint`: path to your CPC checkpoint
+* `file_extension`: ".flac" in this case (the files in path_data)
+* `feature_size` *(optional): size of a single feature, converts to frame step; default will be 100ms*  
+* `speaker_mode` & `context_mode` *(optional)*  
+    * *these both default to "all", i.e. {"within_s", "across_s"} and {"within_c", "without_c"}*  
+    * *you could specify just one of the two options per mode if you wanted, e.g. speaker_mode="across_s" contextmode="without_c"*
+* `distance_mode` *(optional): this defaults to "cosine"; other options are 'euclidian', 'kl', 'kl_symmetric'*
+
+In total, the basic run would look as follows:  
+  
+    cd abx_revamped
+    conda activate zr2021-eval
+    eval_ABX.py path_data="/scratch1/.../dev-clean/" path_item_file="/scratch2/.../dev-clean.item" path_checkpoint="/.../abc.pt" file_extension=".flac" 
 
 ## What this was based on
 
@@ -12,7 +51,7 @@ The parts of `abx_revamped` that aren't from ZS2021 or libri-light were borrowed
 
 `abx_revamped` also takes from ZS2021 the file `phonetic.py`, which uses `phonetic_eval`'s contents in ZS-specific ways. [evaluate.py](https://github.com/zerospeech/zerospeech2021/blob/65ba7cbb642a1d56282e7d1b86a728e09a9d6dc5/zerospeech2021/cli/evaluate.py) is the real end of the line in ZS2021, but its functions are not affected by the alterations in `abx_revamped`, so it can be kept as is, separate from the ABX evaluation.
 
-#### Accordingly, the requirements for this match those of the other ABX versions: ABX modules and CPC loading capability. 
+##### Accordingly, the requirements for this match those of the other ABX versions: ABX modules and CPC loading capability. 
 
 ## What this is
 
