@@ -40,7 +40,7 @@ def load_txt(x):
     data = torch.tensor(np.loadtxt(x))
     assert (len(data.size()) == 2)
     return data
-# If model loaded from checkpoint, procedure specified in main()
+# If model loaded from checkpoint, procedure specified in main() below
 
 
 def ABX(feature_function,
