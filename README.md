@@ -32,20 +32,20 @@ To run `eval_ABX.py` in isolation from its outer layers, you will need to give i
     * /scratch2/alyashenko/item_from_alignment/test-clean/test-clean.item
     * /scratch2/alyashenko/item_from_alignment/test-other/test-other.item  
 * **the two above arguments must match when passed to eval_ABX: dev-clean with dev-clean, test-other with test-other, etc.**
-* `path_checkpoint`: path to your CPC checkpoint
-* `file_extension`: ".flac" in this case (the files in path_data)
-* `feature_size` *(optional): size of a single feature, converts to frame step; default will be 100ms*  
-* `speaker_mode` & `context_mode` *(optional)*  
+* `--path_checkpoint`: path to your CPC checkpoint
+* `--file_extension`: ".flac" in this case (the files in path_data)
+* `--feature_size` *(optional): size of a single feature, converts to frame step; default will be 100ms*  
+* `--speaker_mode` & `--context_mode` *(optional)*  
     * *these both default to "all", i.e. {"within", "across"} and {"within", "without"}*  
     * *you could specify just one of the two options per mode if you wanted, e.g. speaker_mode="across" contextmode="without"*
-* `distance_mode` *(optional): this defaults to "cosine"; other options are 'euclidian', 'kl', 'kl_symmetric'*  
-* `out`: directory that your scores will output to 
+* `--distance_mode` *(optional): this defaults to "cosine"; other options are 'euclidian', 'kl', 'kl_symmetric'*  
+* `--out`: directory that your scores will output to; default = sister to eval_ABX.py (i.e. this directory) 
 
 In total, the basic run would look as follows:  
   
     cd abx_revamped
     conda activate zr2021-eval
-    eval_ABX.py --path-data=/scratch1/.../dev-clean/ --path-item-file=/scratch2/.../dev-clean.item --path-checkpoint=/.../abc.pt file_extension=.flac --out=/.../scores/
+    eval_ABX.py --path_checkpoint=/.../abc.pt file_extension=.flac --out=/.../scores/ /scratch1/.../dev-clean/ /scratch2/.../dev-clean.item
 
 ## What this was based on
 
