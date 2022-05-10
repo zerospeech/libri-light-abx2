@@ -4,7 +4,12 @@ The ABX phonetic evaluation as used by ZeroSpeech challenge, in the process of b
   
 ### Requirements?  
   
-The requirements for this are the same as for ZS2021 - the environment "zr2021-eval" should be available (???) through oberon, which should include the CPC loading nightmare
+The requirements for this are the same as for ZS2021 - the environment "zr2021-eval" should be available (???) through oberon, which should include the CPC loading nightmare already pre-assembled.  
+  
+The only set-up one needs to do in place upon pulling this repo is compiling the ABX module's cython code:  
+  
+    cd abx_revamped/ABX_src
+    python setup.py build_ext --inplace
 
 ### How to use this for CPC checkpoints?
 
@@ -31,8 +36,8 @@ To run `eval_ABX.py` in isolation from its outer layers, you will need to give i
 * `file_extension`: ".flac" in this case (the files in path_data)
 * `feature_size` *(optional): size of a single feature, converts to frame step; default will be 100ms*  
 * `speaker_mode` & `context_mode` *(optional)*  
-    * *these both default to "all", i.e. {"within_s", "across_s"} and {"within_c", "without_c"}*  
-    * *you could specify just one of the two options per mode if you wanted, e.g. speaker_mode="across_s" contextmode="without_c"*
+    * *these both default to "all", i.e. {"within", "across"} and {"within", "without"}*  
+    * *you could specify just one of the two options per mode if you wanted, e.g. speaker_mode="across" contextmode="without"*
 * `distance_mode` *(optional): this defaults to "cosine"; other options are 'euclidian', 'kl', 'kl_symmetric'*  
 * `out`: directory that your scores will output to 
 
@@ -40,7 +45,7 @@ In total, the basic run would look as follows:
   
     cd abx_revamped
     conda activate zr2021-eval
-    eval_ABX.py --path_data="/scratch1/.../dev-clean/" --path_item_file="/scratch2/.../dev-clean.item" --path_checkpoint="/.../abc.pt" file_extension=".flac" --out="/.../scores/"
+    eval_ABX.py --path-data=/scratch1/.../dev-clean/ --path-item-file=/scratch2/.../dev-clean.item --path-checkpoint=/.../abc.pt file_extension=.flac --out=/.../scores/
 
 ## What this was based on
 
