@@ -74,7 +74,7 @@ def ABX(feature_function,
         elif contextmode == "any":
             ABXDataset = phone_abx_it.phoneABXFeatureLoader(
                                     path_item_file, seq_list,
-                                    feature_function, frame_step, True
+                                    feature_function, frame_step, True)
             dimnwithin = None # not actually used
             dimnacross = [3]
        
