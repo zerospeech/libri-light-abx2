@@ -33,13 +33,14 @@ To run `eval_ABX.py` in isolation from its outer layers, you will need to give i
 * `speaker_mode` & `context_mode` *(optional)*  
     * *these both default to "all", i.e. {"within_s", "across_s"} and {"within_c", "without_c"}*  
     * *you could specify just one of the two options per mode if you wanted, e.g. speaker_mode="across_s" contextmode="without_c"*
-* `distance_mode` *(optional): this defaults to "cosine"; other options are 'euclidian', 'kl', 'kl_symmetric'*
+* `distance_mode` *(optional): this defaults to "cosine"; other options are 'euclidian', 'kl', 'kl_symmetric'*  
+* `out`: directory that your scores will output to 
 
 In total, the basic run would look as follows:  
   
     cd abx_revamped
     conda activate zr2021-eval
-    eval_ABX.py path_data="/scratch1/.../dev-clean/" path_item_file="/scratch2/.../dev-clean.item" path_checkpoint="/.../abc.pt" file_extension=".flac" 
+    eval_ABX.py --path_data="/scratch1/.../dev-clean/" --path_item_file="/scratch2/.../dev-clean.item" --path_checkpoint="/.../abc.pt" file_extension=".flac" --out="/.../scores/"
 
 ## What this was based on
 
