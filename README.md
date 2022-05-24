@@ -2,6 +2,8 @@
 
 The ABX phonetic evaluation as used by ZeroSpeech challenge, in the process of being revamped to add "context-type" options (on-triphone, within-context, any-context).  
   
+*For files used to get here and an explanation of all the differences between them, see also /scratch2/alyashenko/ABX_archived/ - there are many files with very similar names that built up to the ones collected in working order here, they are all archived in this directory with an explanation guiding through them.*  
+  
 ### Requirements?  
   
 The requirements for this are the same as for ZS2021 - the environment "zr2021-eval" should be available (???) through oberon, which should include the CPC loading nightmare already pre-assembled.  
