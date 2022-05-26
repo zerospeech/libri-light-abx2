@@ -8,8 +8,31 @@ import numpy as np
 import ABX_src.abx_group_computation as abx_g
 import ABX_src.abx_iterators as abx_it  # <- within context
 import ABX_src.phone_abx_iterators as phone_abx_it  # <- without context
-from cpc.feature_loader import buildFeature, loadCPCFeatureMaker
+from cpc.feature_loader import buildFeature, FeatureModule, loadModel
 from pathlib import Path
+
+
+def loadCPCFeatureMaker(
+    CPC_pathCheckpoint,
+    encoder_layer=False,
+    keepHidden=True,
+    gru_level=-1,
+    cuda=False,
+):
+    if gru_level and gru_level > 0:
+        updateConfig = argparse.Namespace(nLevelsGRU=gru_level)
+    else:
+        updateConfig = None
+    model, _, _ = loadModel(
+        [CPC_pathCheckpoint], updateConfig=updateConfig
+    )
+    model.gAR.keepHidden = keepHidden
+    featureMaker = FeatureModule(model, get_encoded=encoder_layer)
+    featureMaker.eval()
+    if cuda:
+        featureMaker.cuda()
+
+    return featureMaker
 
 
 def find_all_files(path_dir, extension):
@@ -263,7 +286,7 @@ def main(argv):
         elif args.file_extension == ".txt":
             feature_function = load_txt
     else:
-        feature_maker, _ = loadCPCFeatureMaker(
+        feature_maker = loadCPCFeatureMaker(
             args.path_checkpoint,
             encoder_layer=False,
             keepHidden=True,
