@@ -103,7 +103,7 @@ def ABX(
             dimnacross = [3, 4]
         elif contextmode == "any":
             ABXDataset = phone_abx_it.phoneABXFeatureLoader(
-                path_item_file, seq_list, feature_function, frame_step, True
+                path_item_file, seq_list, feature_function, step_feature, True
             )
             dimnwithin = None  # not actually used
             dimnacross = [3]
