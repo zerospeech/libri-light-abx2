@@ -2,7 +2,6 @@
 import torch
 import math
 from .ABX_src import dtw
-import progressbar
 
 
 def get_distance_function_from_name(name_str):
@@ -135,16 +134,13 @@ def get_abx_scores_dtw_on_group(group_iterator,
 
     data_list = []
     coords_list = []
-    bar = progressbar.ProgressBar(maxval=len(group_iterator))
-    bar.start()
 
     with torch.no_grad():
         for index, group in enumerate(group_iterator):
-            bar.update(index)
+
             coords, abx = loc_dtw(group, distance_function, symmetric)
             data_list.append(abx)
             coords_list.append(coords)
-    bar.finish()
 
     return torch.sparse.FloatTensor(torch.LongTensor(coords_list).t(),
                                     torch.FloatTensor(data_list),

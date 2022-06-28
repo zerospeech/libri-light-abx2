@@ -2,7 +2,6 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-import progressbar
 import torch
 from multiprocessing import Lock, Manager, Process
 from copy import deepcopy
@@ -119,16 +118,12 @@ def get_seq_PER(seqLabels, detectedLabels):
 
 
 def getPER(dataLoader, featureMaker, blankLabel):
-
-    bar = progressbar.ProgressBar(len(dataLoader))
-    bar.start()
-
+    
     out = 0
     n_items = 0
     n_keep_beam_search = 100
     for index, data in enumerate(dataLoader):
 
-        bar.update(index)
         with torch.no_grad():
             output = featureMaker(data).cpu().numpy()
         labels = data[1]
@@ -160,5 +155,4 @@ def getPER(dataLoader, featureMaker, blankLabel):
         out += outScore.value
         n_items += N
 
-    bar.finish()
     return (out / n_items)

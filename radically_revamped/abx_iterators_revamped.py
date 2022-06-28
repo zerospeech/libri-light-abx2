@@ -4,7 +4,6 @@
 # to account for the differing Iterator class names
 
 import torch
-import progressbar
 import math
 import random
 
@@ -164,13 +163,10 @@ class ABXFeatureLoader:
         totSize = 0
 
         print("Building the input features...")
-        bar = progressbar.ProgressBar(maxval=len(seqList))
-        bar.start()
 
         for index, vals in enumerate(seqList):
 
             fileID, file_path = vals
-            bar.update(index)
             if fileID not in files_data:
                 continue
 
@@ -198,7 +194,6 @@ class ABXFeatureLoader:
                 data.append(features[index_start:index_end])
                 totSize += loc_size
 
-        bar.finish()
         print("...done")
 
         self.data = torch.cat(data, dim=0)
