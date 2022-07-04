@@ -117,6 +117,7 @@ def get_features_group(in_data, index_order):
 class phoneABXFeatureLoader:
 
     def __init__(self,
+                 seed_n,
                  path_item_file,
                  seqList,
                  featureMaker,
@@ -141,7 +142,7 @@ class phoneABXFeatureLoader:
         you have a collection of features files in the torch .pt format then
         you can just set featureMaker = torch.load.
         """
-
+        random.seed(seed_n)
         files_data, self.phone_match, self.speaker_match = \
             load_phone_item_file(path_item_file)
         self.seqNorm = True
@@ -297,7 +298,7 @@ class phoneABXWithinGroupIterator(phoneABXIterator):
     def __init__(self, abxDataset, max_size_group):
 
         super(phoneABXWithinGroupIterator, self).__init__(abxDataset,
-                                                     max_size_group)
+                                                          max_size_group)
         self.symmetric = True
 
         for speaker_group in self.groups_sp:
@@ -346,7 +347,7 @@ class phoneABXAcrossGroupIterator(phoneABXIterator):
     def __init__(self, abxDataset, max_size_group):
 
         super(phoneABXAcrossGroupIterator, self).__init__(abxDataset,
-                                                     max_size_group)
+                                                          max_size_group)
         self.symmetric = False
         self.get_speakers_from_p = {}
         self.max_x = 5

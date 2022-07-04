@@ -71,6 +71,7 @@ def load_txt(x):
 
 
 def ABX(
+    seed_n,
     feature_function,
     path_item_file,
     seq_list,
@@ -80,7 +81,7 @@ def ABX(
     contextmodes,
     cuda=False,
     max_x_across=5,
-    max_size_group=30,
+    max_size_group=30
 ):
 
     # Distance function
@@ -97,13 +98,13 @@ def ABX(
         # This may change with better streamlining
         if contextmode == "within":
             ABXDataset = abx_it.ABXFeatureLoader(
-                path_item_file, seq_list, feature_function, step_feature, True
+                seed_n, path_item_file, seq_list, feature_function, step_feature, True
             )
             dimnwithin = 3
             dimnacross = [3, 4]
         elif contextmode == "any":
             ABXDataset = phone_abx_it.phoneABXFeatureLoader(
-                path_item_file, seq_list, feature_function, step_feature, True
+                seed_n, path_item_file, seq_list, feature_function, step_feature, True
             )
             dimnwithin = None  # not actually used
             dimnacross = [3]
@@ -212,7 +213,7 @@ def parse_args(argv):
         "--file_extension",
         type=str,
         default=".pt",
-        choices=[".pt", ".npy", ".wav", ".flac", ".mp3", ".npz"],
+        choices=[".pt", ".npy", ".wav", ".flac", ".mp3", ".npz", ".txt"],
     )
     parser.add_argument(
         "--feature_size",
@@ -267,6 +268,12 @@ def parse_args(argv):
         default=None,
         help="Path where the results should be saved",
     )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=3459,
+        help="Seed to use in random sampling.",
+    )
 
     # multi-gpu / multi-node
     return parser.parse_args(argv)
@@ -275,7 +282,7 @@ def parse_args(argv):
 def main(argv):
 
     args = parse_args(argv)
-
+    print("eval_ABX args:")
     print(args)
 
     if args.path_checkpoint is None:
@@ -317,6 +324,7 @@ def main(argv):
     seq_list = find_all_files(args.path_data, args.file_extension)
 
     scores = ABX(
+        args.seed,
         feature_function,
         args.path_item_file,
         seq_list,

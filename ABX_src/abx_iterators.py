@@ -112,6 +112,7 @@ def get_features_group(in_data, index_order):
 class ABXFeatureLoader:
 
     def __init__(self,
+                 seed_n,
                  path_item_file,
                  seqList,
                  featureMaker,
@@ -137,6 +138,7 @@ class ABXFeatureLoader:
         you can just set featureMaker = torch.load.
         """
 
+        random.seed(seed_n)
         files_data, self.context_match, self.phone_match, self.speaker_match = \
             load_item_file(path_item_file)
         self.seqNorm = True
@@ -261,7 +263,6 @@ class ABXIterator:
         max_size = 0
         to_take = list(range(i_start, i_end))
         if i_end - i_start > self.max_size_group:
-            random.seed(42)
             to_take = random.sample(to_take, k=self.max_size_group)
         for i in to_take:
             loc_data, loc_size, loc_id = self.dataset[self.index_csp[i]]
