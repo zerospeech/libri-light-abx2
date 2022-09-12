@@ -1,6 +1,8 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import argparse
 import sys
+from typing import Callable
+from typing_extensions import LiteralString
 import torch
 import json
 import os
@@ -10,7 +12,7 @@ import ABX_src.abx_iterators as abx_it  # <- within context
 import ABX_src.phone_abx_iterators as phone_abx_it  # <- without context
 from cpc.feature_loader import buildFeature, FeatureModule, loadModel
 from pathlib import Path
-
+from ABX_src.models import Pooling
 
 def loadCPCFeatureMaker(
     CPC_pathCheckpoint,
@@ -36,7 +38,7 @@ def loadCPCFeatureMaker(
 
 
 def find_all_files(path_dir, extension):
-    out = []
+    out: list[tuple[str, LiteralString]] = []
     for root, dirs, filenames in os.walk(path_dir):
         for f in filenames:
             if f.endswith(extension):
@@ -71,14 +73,15 @@ def load_txt(x):
 
 
 def ABX(
-    seed_n,
-    feature_function,
-    path_item_file,
-    seq_list,
-    distance_mode,
-    step_feature,
-    speakermodes,
-    contextmodes,
+    pooling: Pooling,
+    seed_n: int,
+    feature_function: Callable,
+    path_item_file: str,
+    seq_list: list[tuple[str, LiteralString]],
+    distance_mode: str,
+    step_feature: float,
+    speakermodes: list[str],
+    contextmodes: list[str],
     cuda=False,
     max_x_across=5,
     max_size_group=30
@@ -98,13 +101,13 @@ def ABX(
         # This may change with better streamlining
         if contextmode == "within":
             ABXDataset = abx_it.ABXFeatureLoader(
-                seed_n, path_item_file, seq_list, feature_function, step_feature, True
+                pooling, seed_n, path_item_file, seq_list, feature_function, step_feature, True
             )
             dimnwithin = 3
             dimnacross = [3, 4]
         elif contextmode == "any":
             ABXDataset = phone_abx_it.phoneABXFeatureLoader(
-                seed_n, path_item_file, seq_list, feature_function, step_feature, True
+                pooling, seed_n, path_item_file, seq_list, feature_function, step_feature, True
             )
             dimnwithin = None  # not actually used
             dimnacross = [3]
@@ -191,6 +194,17 @@ def ABX(
 
     return scores
 
+def pooling_type(pooling: str):
+    match pooling:
+        case "none":
+            return Pooling.NONE
+        case "mean":
+            return Pooling.MEAN
+        case "hamming":
+            return Pooling.HAMMING
+        case other:
+            raise ValueError("Unsupported pooling type.")
+
 
 def parse_args(argv):
 
@@ -274,6 +288,13 @@ def parse_args(argv):
         default=3459,
         help="Seed to use in random sampling.",
     )
+    parser.add_argument(
+        "--pooling",
+        type=str,
+        choices = ['none', 'mean', 'hamming'],
+        default="none",
+        help="Type of pooling over frame representations of items.",
+    )
 
     # multi-gpu / multi-node
     return parser.parse_args(argv)
@@ -324,6 +345,7 @@ def main(argv):
     seq_list = find_all_files(args.path_data, args.file_extension)
 
     scores = ABX(
+        pooling_type(args.pooling),
         args.seed,
         feature_function,
         args.path_item_file,

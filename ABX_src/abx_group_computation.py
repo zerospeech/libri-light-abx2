@@ -1,7 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import torch
 import math
-from .ABX_src import dtw
+from ABX_src import dtw
 
 
 def get_distance_function_from_name(name_str):

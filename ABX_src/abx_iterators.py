@@ -1,8 +1,10 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+from typing import Any, Callable
+from typing_extensions import LiteralString
 import torch
 import math
 import random
-
+from models import Pooling
 
 def normalize_with_singularity(x):
     r"""
@@ -23,25 +25,34 @@ def normalize_with_singularity(x):
     return torch.cat([x, border_vect], dim=1)
 
 
-def load_item_file(path_item_file):
+def load_item_file(path_item_file: str):
     r""" Load a .item file indicating the triplets for the ABX score. The
     input file must have the following fomat:
     line 0 : whatever (not read)
     line > 0: #file_ID onset offset #phone prev-phone next-phone speaker
     onset : begining of the triplet (in s)
     onset : end of the triplet (in s)
+
+    Returns a tuple of files_data, context_match, phone_match, speaker_match where
+            files_data: dictionary whose key is the file id, and the value is the list of item tokens in that file, each item in turn 
+                            given as a list of onset, offset, context_id, phone_id, speaker_id.
+            phone_match is a dictionary of the form { phone_str: phone_id }.
+            context_match is a dictionary of the form { prev_phone_str+next_phone_str: context_id }.
+            speaker_match is a dictionary of the form { speaker_str: speaker_id }.
+            The id in each case is iterative (0, 1 ...)
     """
     with open(path_item_file, 'r') as file:
         data = file.readlines()[1:]
 
     data = [x.replace('\n', '') for x in data]
 
-    out = {}
+    out: dict[str, list[list[Any]]] = {} # key: fileID, value: a list of items, each item in turn given as a list of
+    # onset, offset, context_id, phone_id, speaker_id (see below for the id constructions)
 
-    phone_match = {}
-    speaker_match = {}
-    context_match = {}
-
+    phone_match: dict[str, int] = {} # Provide a phone_id for each phoneme type (0, 1 ...)
+    context_match: dict[str, int] = {} # ... context_id ...
+    speaker_match: dict[str, int] = {} # ... speaker_id ...
+    
     for line in data:
         items = line.split()
         assert(len(items) == 7)  # assumes 7-column files
@@ -56,8 +67,8 @@ def load_item_file(path_item_file):
         context = '+'.join([items[4], items[5]])
 
         if phone not in phone_match:
-            s = len(phone_match)
-            phone_match[phone] = s
+            s = len(phone_match) # We increment the id by 1 each time a new phoneme type is found
+            phone_match[phone] = s 
         phone_id = phone_match[phone]
         
         if context not in context_match:
@@ -112,12 +123,13 @@ def get_features_group(in_data, index_order):
 class ABXFeatureLoader:
 
     def __init__(self,
-                 seed_n,
-                 path_item_file,
-                 seqList,
-                 featureMaker,
-                 stepFeature,
-                 normalize):
+                 pooling: Pooling,
+                 seed_n: int,
+                 path_item_file: str,
+                 seqList: list[tuple[str, LiteralString]],
+                 featureMaker: Callable,
+                 stepFeature: float,
+                 normalize: bool):
         """
         Args:
             path_item_file (str): path to the .item files containing the ABX
@@ -143,16 +155,68 @@ class ABXFeatureLoader:
             load_item_file(path_item_file)
         self.seqNorm = True
         self.stepFeature = stepFeature
-        self.loadFromFileData(files_data, seqList, featureMaker, normalize)
+        self.loadFromFileData(pooling, files_data, seqList, featureMaker, normalize)
 
-    def loadFromFileData(self, files_data, seqList, feature_maker, normalize):
+    def pool(self, feature: torch.Tensor, pooling: Pooling):
+        match pooling:
+            case Pooling.NONE:
+                return feature
+            case Pooling.MEAN:
+                # vector avg. But keep the original shape. 
+                # So e.g. if we had 4 frames with 51 feature dimensions [4,51], we will get back [1,51], not [51]
+                return feature.mean(dim = 0, keepdim = True)
+            case Pooling.HAMMING:
+                raise NotImplementedError()
+            case other:
+                raise ValueError("Invalid value for pooling.")
+
+    def start_end_indices(self,
+                          phone_start: Any,
+                          phone_end: Any,
+                          all_features: torch.Tensor,
+                          stepFeature: float):
+        index_start = max(
+            0, int(math.ceil(stepFeature * phone_start - 0.5)))
+        index_end = min(
+            all_features.size(0), int(math.floor(stepFeature * phone_end - 0.5)))
+        return index_start, index_end
+
+    def append_feature(self,
+                       index_start,
+                       index_end,
+                       totSize: int,
+                       all_features: torch.Tensor,
+                       context_id: Any,
+                       phone_id: Any,
+                       speaker_id: Any,
+                       data: list[torch.Tensor],
+                       manifest: list[Any],
+                       pooling: Pooling):
+        """ Build and append the feature to the features data list. 
+        Add information on it to the manifest, i.e. to self.features.
+        Return the total size i.e. the total number of frames added to the data thus far."""
+        feature = all_features[index_start:index_end]
+        feature = self.pool(feature, pooling)
+        start_i = totSize
+        loc_size = feature.shape[0]
+        manifest.append([start_i, loc_size, context_id, phone_id, speaker_id])
+        data.append(feature)
+        return totSize + loc_size
+
+    def loadFromFileData(self,
+                         pooling: Pooling,
+                         files_data: dict[str, list[list[Any]]],
+                         seqList: list[tuple[str, LiteralString]],
+                         feature_maker: Callable,
+                         normalize: bool):
 
         # self.features[i]: index_start, size, context_id, phone_id, speaker_id
+        # This is like a manifest of what is in self.data[i]
         self.features = []
         self.INDEX_CONTEXT = 2
         self.INDEX_PHONE = 3
         self.INDEX_SPEAKER = 4
-        data = []
+        data: list[torch.Tensor] = [] # data[i] is the data for a given item. data is no longer discriminated by file
 
         totSize = 0
 
@@ -161,35 +225,38 @@ class ABXFeatureLoader:
         for index, vals in enumerate(seqList):
 
             fileID, file_path = vals
-            if fileID not in files_data:
+            if fileID not in files_data: # file in submission not in the item file
                 continue
 
-            features = feature_maker(file_path)
+            all_features: torch.Tensor = feature_maker(file_path)
             if normalize:
-                features = normalize_with_singularity(features)
+                all_features = normalize_with_singularity(all_features)
 
-            features = features.detach().cpu()
+            all_features = all_features.detach().cpu()
 
+            # The list of item tokens in a file as defined by the item file 
+            # Each item is given as a list of onset, offset, context_id, phone_id, speaker_id
             phone_data = files_data[fileID]
 
             for phone_start, phone_end, context_id, phone_id, speaker_id in phone_data:
-
-                index_start = max(
-                    0, int(math.ceil(self.stepFeature * phone_start - 0.5)))
-                index_end = min(features.size(0),
-                                int(math.floor(self.stepFeature * phone_end - 0.5)))
-
-                if index_start >= features.size(0) or index_end <= index_start:
+                index_start, index_end = self.start_end_indices(phone_start,
+                                                                phone_end,
+                                                                all_features,
+                                                                self.stepFeature)
+                if index_start >= all_features.size(0) or index_end <= index_start:
                     continue
-
-                loc_size = index_end - index_start
-                self.features.append([totSize, loc_size, context_id,
-                                      phone_id, speaker_id])
-                data.append(features[index_start:index_end])
-                totSize += loc_size
-
+                totSize = self.append_feature(index_start,
+                                              index_end,
+                                              totSize,
+                                              all_features,
+                                              context_id,
+                                              phone_id,
+                                              speaker_id,
+                                              data,
+                                              self.features,
+                                              pooling)
+                
         print("...done")
-
         self.data = torch.cat(data, dim=0)
         self.feature_dim = self.data.size(1)
 
