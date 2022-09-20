@@ -13,6 +13,7 @@ from typing_extensions import LiteralString
 import torch
 import math
 import random
+import numpy as np
 from .models import Pooling
 
 def normalize_with_singularity(x):
@@ -163,7 +164,10 @@ class phoneABXFeatureLoader:
                 # So e.g. if we had 4 frames with 51 feature dimensions [4,51], we will get back [1,51], not [51]
                 return feature.mean(dim = 0, keepdim = True)
             case Pooling.HAMMING:
-                raise NotImplementedError()
+                h: np.ndarray = np.hamming(feature.size(0))
+                np_f: np.ndarray = feature.detach().cpu().numpy()
+                pooled: np.ndarray = (h.dot(np_f) / sum(h))[None,:]
+                return torch.from_numpy(pooled)
             case other:
                 raise ValueError("Invalid value for pooling.")
 

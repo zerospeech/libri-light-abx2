@@ -13,6 +13,7 @@ import ABX_src.phone_abx_iterators as phone_abx_it  # <- without context
 from cpc.feature_loader import buildFeature, FeatureModule, loadModel
 from pathlib import Path
 from ABX_src.models import Pooling
+from datetime import datetime
 
 def loadCPCFeatureMaker(
     CPC_pathCheckpoint,
@@ -71,7 +72,6 @@ def load_txt(x):
 
 # If model loaded from checkpoint, procedure specified in main() below
 
-
 def ABX(
     pooling: Pooling,
     seed_n: int,
@@ -93,6 +93,7 @@ def ABX(
     # Output
     scores = {}
 
+    print("Date and time of run start:", datetime.now().strftime("%d/%m/%Y %H:%M"))
     # ABX calculations differ per context mode
     for contextmode in contextmodes:
 
@@ -120,8 +121,9 @@ def ABX(
             print(f"Computing ABX {contextmode} context within speakers...")
             ABXIterator = ABXDataset.get_iterator("within", max_size_group)
             group_confusion = abx_g.get_abx_scores_dtw_on_group(
-                ABXIterator, distance_function, ABXIterator.symmetric
+                ABXIterator, distance_function, ABXIterator.symmetric, pooling
             )
+
             n_data = group_confusion._values().size(0)
             index_ = torch.sparse.LongTensor(
                 group_confusion._indices(),
@@ -163,7 +165,7 @@ def ABX(
             ABXIterator = ABXDataset.get_iterator("across", max_size_group)
             ABXIterator.max_x = max_x_across
             group_confusion = abx_g.get_abx_scores_dtw_on_group(
-                ABXIterator, distance_function, ABXIterator.symmetric
+                ABXIterator, distance_function, ABXIterator.symmetric, pooling
             )
             n_data = group_confusion._values().size(0)
             index_ = torch.sparse.LongTensor(
@@ -256,7 +258,7 @@ def parse_args(argv):
         "--distance_mode",
         type=str,
         default="cosine",
-        choices=["euclidian", "cosine", "kl", "kl_symmetric"],
+        choices=["euclidian", "euclidean", "cosine", "kl", "kl_symmetric"],
         help="Choose the kind of distance to use to compute " "the ABX score.",
     )
     parser.add_argument(
@@ -366,11 +368,11 @@ def main(argv):
     )
     out_dir.mkdir(exist_ok=True)
 
-    path_score = out_dir / "ABX_scores.json"
+    path_score = out_dir / f"ABX_scores_pooling-{args.pooling}.json"
     with open(path_score, "w") as file:
         json.dump(scores, file, indent=2)
-
-    path_args = out_dir / "ABX_args.json"
+    
+    path_args = out_dir / f"ABX_args_pooling-{args.pooling}.json"
     with open(path_args, "w") as file:
         json.dump(vars(args), file, indent=2)
 
