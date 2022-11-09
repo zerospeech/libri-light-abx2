@@ -1,19 +1,22 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import argparse
-import sys
-from typing import Callable
-from typing_extensions import LiteralString
-import torch
 import json
 import os
+import sys
+from datetime import datetime
+from pathlib import Path
+from typing import Callable
+
 import numpy as np
+import torch
+from typing_extensions import LiteralString
+
 import ABX_src.abx_group_computation as abx_g
 import ABX_src.abx_iterators as abx_it  # <- within context
 import ABX_src.phone_abx_iterators as phone_abx_it  # <- without context
-from cpc.feature_loader import buildFeature, FeatureModule, loadModel
-from pathlib import Path
 from ABX_src.models import Pooling
-from datetime import datetime
+from cpc.feature_loader import FeatureModule, buildFeature, loadModel
+
 
 def loadCPCFeatureMaker(
     CPC_pathCheckpoint,
@@ -26,9 +29,7 @@ def loadCPCFeatureMaker(
         updateConfig = argparse.Namespace(nLevelsGRU=gru_level)
     else:
         updateConfig = None
-    model, _, _ = loadModel(
-        [CPC_pathCheckpoint], updateConfig=updateConfig
-    )
+    model, _, _ = loadModel([CPC_pathCheckpoint], updateConfig=updateConfig)
     model.gAR.keepHidden = keepHidden
     featureMaker = FeatureModule(model, get_encoded=encoder_layer)
     featureMaker.eval()
@@ -38,7 +39,11 @@ def loadCPCFeatureMaker(
     return featureMaker
 
 
-def find_all_files(path_dir, extension):
+def find_all_files(path_dir, extension) -> list[tuple[str, LiteralString]]:
+    """Returns: a list of tuples, each tuple having this format:
+    [0]: filename (no extension);
+    [1]: absolute path of the file.
+    """
     out: list[tuple[str, LiteralString]] = []
     for root, dirs, filenames in os.walk(path_dir):
         for f in filenames:
@@ -72,6 +77,7 @@ def load_txt(x):
 
 # If model loaded from checkpoint, procedure specified in main() below
 
+
 def ABX(
     pooling: Pooling,
     seed_n: int,
@@ -84,7 +90,7 @@ def ABX(
     contextmodes: list[str],
     cuda=False,
     max_x_across=5,
-    max_size_group=30
+    max_size_group=30,
 ):
 
     # Distance function
@@ -93,7 +99,9 @@ def ABX(
     # Output
     scores = {}
 
-    print("Date and time of run start:", datetime.now().strftime("%d/%m/%Y %H:%M"))
+    print(
+        "Date and time of run start:", datetime.now().strftime("%d/%m/%Y %H:%M")
+    )
     # ABX calculations differ per context mode
     for contextmode in contextmodes:
 
@@ -102,13 +110,25 @@ def ABX(
         # This may change with better streamlining
         if contextmode == "within":
             ABXDataset = abx_it.ABXFeatureLoader(
-                pooling, seed_n, path_item_file, seq_list, feature_function, step_feature, True
+                pooling,
+                seed_n,
+                path_item_file,
+                seq_list,
+                feature_function,
+                step_feature,
+                True,
             )
             dimnwithin = 3
             dimnacross = [3, 4]
         elif contextmode == "any":
             ABXDataset = phone_abx_it.phoneABXFeatureLoader(
-                pooling, seed_n, path_item_file, seq_list, feature_function, step_feature, True
+                pooling,
+                seed_n,
+                path_item_file,
+                seq_list,
+                feature_function,
+                step_feature,
+                True,
             )
             dimnwithin = None  # not actually used
             dimnacross = [3]
@@ -134,9 +154,7 @@ def ABX(
                 divisor_context = index_.to_dense()
                 group_confusion = group_confusion.to_dense()
             else:
-                divisor_context = torch.sparse.sum(
-                    index_, dimnwithin
-                ).to_dense()
+                divisor_context = torch.sparse.sum(index_, dimnwithin).to_dense()
                 group_confusion = torch.sparse.sum(
                     group_confusion, dimnwithin
                 ).to_dense()
@@ -177,9 +195,7 @@ def ABX(
             group_confusion = torch.sparse.sum(
                 group_confusion, dimnacross
             ).to_dense()
-            group_confusion = reduce_sparse_data(
-                group_confusion, divisor_context
-            )
+            group_confusion = reduce_sparse_data(group_confusion, divisor_context)
             S, p1, p2 = group_confusion.size()
 
             index_speaker = divisor_context > 0
@@ -195,6 +211,7 @@ def ABX(
             )
 
     return scores
+
 
 def pooling_type(pooling: str):
     match pooling:
@@ -215,9 +232,7 @@ def parse_args(argv):
     parser.add_argument(
         "path_data", type=str, help="Path to directory containing the data"
     )
-    parser.add_argument(
-        "path_item_file", type=str, help="Path to the .item file"
-    )
+    parser.add_argument("path_item_file", type=str, help="Path to the .item file")
     parser.add_argument(
         "--path_checkpoint",
         type=str,
@@ -293,7 +308,7 @@ def parse_args(argv):
     parser.add_argument(
         "--pooling",
         type=str,
-        choices = ['none', 'mean', 'hamming'],
+        choices=["none", "mean", "hamming"],
         default="none",
         help="Type of pooling over frame representations of items.",
     )
@@ -362,16 +377,14 @@ def main(argv):
     )
 
     out_dir = (
-        Path(args.path_checkpoint).parent
-        if args.out is None
-        else Path(args.out)
+        Path(args.path_checkpoint).parent if args.out is None else Path(args.out)
     )
     out_dir.mkdir(exist_ok=True)
 
     path_score = out_dir / f"ABX_scores_pooling-{args.pooling}.json"
     with open(path_score, "w") as file:
         json.dump(scores, file, indent=2)
-    
+
     path_args = out_dir / f"ABX_args_pooling-{args.pooling}.json"
     with open(path_args, "w") as file:
         json.dump(vars(args), file, indent=2)
