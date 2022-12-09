@@ -17,7 +17,7 @@ def normalize_with_singularity(x) -> torch.Tensor:
     cosine distance from any non-null vector.
     """
     S, H = x.size()
-    norm_x = (x**2).sum(dim=1, keepdim=True)
+    norm_x = (x ** 2).sum(dim=1, keepdim=True)
 
     x /= torch.sqrt(norm_x)
     zero_vals = (norm_x == 0).view(S)
@@ -28,7 +28,7 @@ def normalize_with_singularity(x) -> torch.Tensor:
 
 
 def load_item_file(
-    path_item_file: str,
+        path_item_file: str,
 ) -> tuple[
     dict[str, list[list[Any]]], dict[str, int], dict[str, int], dict[str, int]
 ]:
@@ -98,7 +98,6 @@ def load_item_file(
 
 
 def get_features_group(in_data, index_order):
-
     in_index = list(range(len(in_data)))
     in_index.sort(key=lambda x: [in_data[x][i] for i in index_order])
     out_groups = []
@@ -133,14 +132,14 @@ def get_features_group(in_data, index_order):
 
 class ABXFeatureLoader:
     def __init__(
-        self,
-        pooling: Pooling,
-        seed_n: int,
-        path_item_file: str,
-        seqList: list[tuple[str, LiteralString]],
-        featureMaker: Callable,
-        stepFeature: float,
-        normalize: bool,
+            self,
+            pooling: Pooling,
+            seed_n: int,
+            path_item_file: str,
+            seqList: list[tuple[str, LiteralString]],
+            featureMaker: Callable,
+            stepFeature: float,
+            normalize: bool,
     ):
         """
         Args:
@@ -197,11 +196,11 @@ class ABXFeatureLoader:
                 raise ValueError("Invalid value for pooling.")
 
     def start_end_indices(
-        self,
-        phone_start: Any,
-        phone_end: Any,
-        all_features: torch.Tensor,
-        stepFeature: float,
+            self,
+            phone_start: Any,
+            phone_end: Any,
+            all_features: torch.Tensor,
+            stepFeature: float,
     ) -> tuple[int, int]:
         index_start = max(0, int(math.ceil(stepFeature * phone_start - 0.5)))
         index_end = int(
@@ -213,17 +212,17 @@ class ABXFeatureLoader:
         return index_start, index_end
 
     def append_feature(
-        self,
-        index_start,
-        index_end,
-        totSize: int,
-        all_features: torch.Tensor,
-        context_id: Any,
-        phone_id: Any,
-        speaker_id: Any,
-        data: list[torch.Tensor],
-        manifest: list[Any],
-        pooling: Pooling,
+            self,
+            index_start,
+            index_end,
+            totSize: int,
+            all_features: torch.Tensor,
+            context_id: Any,
+            phone_id: Any,
+            speaker_id: Any,
+            data: list[torch.Tensor],
+            manifest: list[Any],
+            pooling: Pooling,
     ) -> int:
         """Build and append the feature to the features data list.
         Add information on it to the manifest, i.e. to self.features.
@@ -237,12 +236,12 @@ class ABXFeatureLoader:
         return totSize + loc_size
 
     def loadFromFileData(
-        self,
-        pooling: Pooling,
-        files_data: dict[str, list[list[Any]]],
-        seqList: list[tuple[str, LiteralString]],
-        feature_maker: Callable,
-        normalize: bool,
+            self,
+            pooling: Pooling,
+            files_data: dict[str, list[list[Any]]],
+            seqList: list[tuple[str, LiteralString]],
+            feature_maker: Callable,
+            normalize: bool,
     ):
 
         # self.features[i]: index_start, size, context_id, phone_id, speaker_id
@@ -276,18 +275,18 @@ class ABXFeatureLoader:
             phone_data = files_data[fileID]
 
             for (
-                phone_start,
-                phone_end,
-                context_id,
-                phone_id,
-                speaker_id,
+                    phone_start,
+                    phone_end,
+                    context_id,
+                    phone_id,
+                    speaker_id,
             ) in phone_data:
                 index_start, index_end = self.start_end_indices(
                     phone_start, phone_end, all_features, self.stepFeature
                 )
                 if (
-                    index_start >= all_features.size(0)
-                    or index_end <= index_start
+                        index_start >= all_features.size(0)
+                        or index_end <= index_start
                 ):
                     continue
                 totSize = self.append_feature(
@@ -327,7 +326,7 @@ class ABXFeatureLoader:
     def __getitem__(self, index):
         i_data, out_size, context_id, phone_id, speaker_id = self.features[index]
         return (
-            self.data[i_data : (i_data + out_size)],
+            self.data[i_data: (i_data + out_size)],
             out_size,
             (context_id, phone_id, speaker_id),
         )

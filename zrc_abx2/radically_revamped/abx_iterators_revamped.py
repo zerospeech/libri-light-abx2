@@ -271,13 +271,13 @@ class ABXIterator:
             get_features_group(abxDataset.features,
                                self.index_order)
     
-    def get_mode_info(contextmode, speakermode)
+    def get_mode_info(contextmode, speakermode):
         # indices' order in index_order list determines 
         # the "within" & "across" variables
         # which are pre-determined within get_features_group
         # before we ever get to the within/across iterators
         # ("any" is handled by not grouping by that variable at all)
-        if speakermode in ["within", "across"]
+        if speakermode in ["within", "across"]:
             if contextmode == "within":
                 return [INDEX_CONTEXT, INDEX_SPEAKER, INDEX_PHONE]
             elif contextmode == "across":

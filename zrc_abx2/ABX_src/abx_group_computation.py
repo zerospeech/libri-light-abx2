@@ -3,8 +3,9 @@ import torch
 import numpy as np
 import math
 from typing import Callable
-from ABX_src import dtw
-from ABX_src.models import Pooling
+import libri_light_dtw as dtw
+from .models import Pooling
+
 
 def get_distance_function_from_name(name_str: str):
     if name_str in ('euclidian', 'euclidean'):
@@ -19,10 +20,11 @@ def get_distance_function_from_name(name_str: str):
 
 
 def check_dtw_group_validity(a, b, x):
-    assert(len(a.size()) == len(b.size()))
-    assert(len(a.size()) == len(x.size()))
-    assert(a.size(2) == x.size(2))
-    assert(a.size(2) == b.size(2))
+    assert (len(a.size()) == len(b.size()))
+    assert (len(a.size()) == len(x.size()))
+    assert (a.size(2) == x.size(2))
+    assert (a.size(2) == b.size(2))
+
 
 def get_kl_distance_batch(a1: torch.Tensor, a2: torch.Tensor, epsilon=1e-6):
     N1, S1, D = a1.size()  # Batch x Seq x Channel
@@ -34,6 +36,7 @@ def get_kl_distance_batch(a1: torch.Tensor, a2: torch.Tensor, epsilon=1e-6):
 
     return prod.sum(dim=4)
 
+
 def get_kl_distance_symmetric_batch(a1: torch.Tensor, a2: torch.Tensor, epsilon=1e-6):
     N1, S1, D = a1.size()
     N2, S2, D = a2.size()
@@ -43,10 +46,11 @@ def get_kl_distance_symmetric_batch(a1: torch.Tensor, a2: torch.Tensor, epsilon=
 
     prod1 = (a1.view(N1, 1, S1, 1, D)) * div1.log()
     prod2 = (a2.view(1, N2, 1, S2, D)) * div2.log()
-    r: torch.Tensor = (0.5*prod1 + 0.5*prod2).sum(dim=4)
+    r: torch.Tensor = (0.5 * prod1 + 0.5 * prod2).sum(dim=4)
     return r
 
-def get_cosine_distance_batch(a1: torch.Tensor, a2: torch.Tensor, epsilon=1e-6): # epsilon unused
+
+def get_cosine_distance_batch(a1: torch.Tensor, a2: torch.Tensor, epsilon=1e-6):  # epsilon unused
     r""" a1 and a2 must be normalized"""
     N1, S1, D = a1.size()  # Batch x Seq x Channel
     N2, S2, D = a2.size()  # Batch x Seq x Channel
@@ -58,24 +62,23 @@ def get_cosine_distance_batch(a1: torch.Tensor, a2: torch.Tensor, epsilon=1e-6):
     return prod
 
 
-def get_euclidian_distance_batch(a1: torch.Tensor, a2: torch.Tensor, epsilon=1e-6): # epsilon unused
+def get_euclidian_distance_batch(a1: torch.Tensor, a2: torch.Tensor, epsilon=1e-6):  # epsilon unused
     N1, S1, D = a1.size()
     N2, S2, D = a2.size()
     diff = a1.view(N1, 1, S1, 1, D) - a2.view(1, N2, 1, S2, D)
-    return torch.sqrt((diff**2).sum(dim=4))
+    return torch.sqrt((diff ** 2).sum(dim=4))
 
 
 def get_distance_group_dtw(a1: torch.Tensor, a2: torch.Tensor, size1: torch.Tensor, size2: torch.Tensor,
                            pooling: Pooling, ignore_diag=False, symmetric=False,
-                           distance_function = get_cosine_distance_batch) -> torch.Tensor:
-
+                           distance_function=get_cosine_distance_batch) -> torch.Tensor:
     N1, S1, D = a1.size()
     N2, S2, D = a2.size()
     if size1.size(0) != N1:
         print(a1.size(), size1.size())
         print(a2.size(), size2.size())
-    assert(size1.size(0) == N1)
-    assert(size2.size(0) == N2)
+    assert (size1.size(0) == N1)
+    assert (size2.size(0) == N2)
     distance_mat: np.ndarray = distance_function(a1, a2).detach().cpu().numpy()
     return dtw.dtw_batch(a1, a2, size1, size2,
                          distance_mat,
@@ -88,14 +91,14 @@ def get_distance_group_dtw(a1: torch.Tensor, a2: torch.Tensor, size1: torch.Tens
     #    return dtw.dtw_batch(a1, a2, size1, size2,
     #                         distance_mat,
     #                         ignore_diag, symmetric)
-    #Recast and reshape to what we would get from the dtw function if given pooled input
-    #return torch.from_numpy(distance_mat.squeeze((1,2))) # Fix dims!
+    # Recast and reshape to what we would get from the dtw function if given pooled input
+    # return torch.from_numpy(distance_mat.squeeze((1,2))) # Fix dims!
+
 
 def get_theta_group_dtw(a: torch.Tensor, b: torch.Tensor, x: torch.Tensor,
                         sa: torch.Tensor, sb: torch.Tensor, sx: torch.Tensor,
                         distance_function: Callable[..., torch.Tensor],
                         symmetric: bool, pooling: Pooling):
-
     check_dtw_group_validity(a, b, x)
 
     dxb = get_distance_group_dtw(
@@ -143,18 +146,17 @@ def loc_dtw(data,
 
     return (coords, 1 - theta)
 
+
 # TODO: let's define a protocol for group_iterator (it can be like 4 different classes)
 # ABXWithinGroupIterator | ABXAcrossGroupIterator | phoneABXWithinGroupIterator | phoneABXAcrossGroupIterator
 def get_abx_scores_dtw_on_group(group_iterator,
                                 distance_function: Callable[..., torch.Tensor],
                                 symmetric: bool, pooling: Pooling):
-
     data_list = []
     coords_list = []
 
     with torch.no_grad():
         for index, group in enumerate(group_iterator):
-
             coords, abx = loc_dtw(group, distance_function, symmetric, pooling)
             data_list.append(abx)
             coords_list.append(coords)
