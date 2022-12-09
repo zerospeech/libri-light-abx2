@@ -312,15 +312,15 @@ class EvalABX:
         return quotient / (1e-08 * (divisor == 0) + divisor)
 
     def _pooling_type(self, pooling: str):
-        match pooling:
-            case "none":
-                return Pooling.NONE
-            case "mean":
-                return Pooling.MEAN
-            case "hamming":
-                return Pooling.HAMMING
-            case other:
-                raise ValueError("Unsupported pooling type.")
+        if pooling == "none":
+            return Pooling.NONE
+        elif pooling == "mean":
+            return Pooling.MEAN
+        elif pooling == "hamming":
+            return Pooling.HAMMING
+        else:
+            raise ValueError("Unsupported pooling type.")
+
 
 def parse_args(argv):
 
