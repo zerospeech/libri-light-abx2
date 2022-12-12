@@ -18,12 +18,17 @@ classifiers = [
     "Intended Audience :: Science/Research"
 ]
 dependencies = [
+    'tqdm',
     'torch',
     'progressbar2',
+    'soundfile',
     'torchaudio',
     'numpy',
 ]
 dynamic = ["version"]
+
+[project.scripts]
+zrc-abx2 = "zrc_abx2.eval_ABX:main"
 
 [project.urls]
 documentation = "https://zerospeech.com/toolbox/"
@@ -37,7 +42,7 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["zrc_abx2*"]
-exclude = ["*.py", "archived*"]
+exclude = ["archived*"]
 
 
 [tool.setuptools_scm]

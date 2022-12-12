@@ -175,25 +175,24 @@ class ABXFeatureLoader:
         )
 
     def pool(self, feature: torch.Tensor, pooling: Pooling) -> torch.Tensor:
-        match pooling:
-            case Pooling.NONE:
-                return feature
-            case Pooling.MEAN:
-                # vector avg. But keep the original shape.
-                # So e.g. if we had 4 frames with 51 feature dimensions [4,51],
-                # we will get back [1,51], not [51]
-                return feature.mean(dim=0, keepdim=True)
-            case Pooling.HAMMING:
-                h: np.ndarray = np.hamming(feature.size(0))
-                np_f: np.ndarray = feature.detach().cpu().numpy()
-                # weight vec dot feature matrix: each row/frame gets its own
-                # hamming weight and all the rows are summed into a single
-                # vector. Then divide by sum of weights. Finally, reshape
-                # into original shape.
-                pooled: np.ndarray = (h.dot(np_f) / sum(h))[None, :]
-                return torch.from_numpy(pooled)
-            case other:
-                raise ValueError("Invalid value for pooling.")
+        if pooling == pooling.NONE:
+            return feature
+        elif pooling == Pooling.MEAN:
+            # vector avg. But keep the original shape.
+            # So e.g. if we had 4 frames with 51 feature dimensions [4,51],
+            # we will get back [1,51], not [51]
+            return feature.mean(dim=0, keepdim=True)
+        elif pooling == Pooling.HAMMING:
+            h: np.ndarray = np.hamming(feature.size(0))
+            np_f: np.ndarray = feature.detach().cpu().numpy()
+            # weight vec dot feature matrix: each row/frame gets its own
+            # hamming weight and all the rows are summed into a single
+            # vector. Then divide by sum of weights. Finally, reshape
+            # into original shape.
+            pooled: np.ndarray = (h.dot(np_f) / sum(h))[None, :]
+            return torch.from_numpy(pooled)
+        else:
+            raise ValueError("Invalid value for pooling.")
 
     def start_end_indices(
             self,

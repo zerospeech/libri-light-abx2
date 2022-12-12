@@ -31,10 +31,11 @@ MAX_X_ACROSS = 5
 OUT = None
 SEED = 3459
 POOLING = "none"
-#CPC
+# CPC
 SEQ_NORM = False
 MAX_SIZE_SEQ = 64000
 STRICT = False
+
 
 class EvalArgs(NamedTuple):
     # See parse_args for help
@@ -61,6 +62,7 @@ class EvalArgs(NamedTuple):
     max_size_seq: int = MAX_SIZE_SEQ
     strict: bool = STRICT
 
+
 # Feature-loading functions, one per file format
 # If model loaded from checkpoint, procedure specified in eval_abx()
 def _load_pt(x):
@@ -80,25 +82,27 @@ def _load_txt(x):
     assert len(data.size()) == 2
     return data
 
+
 def _loadCPCFeatureMaker(
         CPC_pathCheckpoint,
         encoder_layer=False,
         keepHidden=True,
         gru_level=-1,
         cuda=False,
-    ):
-        if gru_level and gru_level > 0:
-            updateConfig = argparse.Namespace(nLevelsGRU=gru_level)
-        else:
-            updateConfig = None
-        model, _, _ = loadModel([CPC_pathCheckpoint], updateConfig=updateConfig)
-        model.gAR.keepHidden = keepHidden
-        featureMaker = FeatureModule(model, get_encoded=encoder_layer)
-        featureMaker.eval()
-        if cuda:
-            featureMaker.cuda()
+):
+    if gru_level and gru_level > 0:
+        updateConfig = argparse.Namespace(nLevelsGRU=gru_level)
+    else:
+        updateConfig = None
+    model, _, _ = loadModel([CPC_pathCheckpoint], updateConfig=updateConfig)
+    model.gAR.keepHidden = keepHidden
+    featureMaker = FeatureModule(model, get_encoded=encoder_layer)
+    featureMaker.eval()
+    if cuda:
+        featureMaker.cuda()
 
-        return featureMaker
+    return featureMaker
+
 
 class EvalABX:
     # INTERFACE
@@ -123,7 +127,7 @@ class EvalABX:
 
             def feature_function(x):
                 return buildFeature(
-                    feature_maker, x, strict=args.strict, maxSizeSeq=args.max_size_seq, seqNorm=args.seq_norm, 
+                    feature_maker, x, strict=args.strict, maxSizeSeq=args.max_size_seq, seqNorm=args.seq_norm,
                 )[0]
 
         # Speaker modes
@@ -159,19 +163,19 @@ class EvalABX:
         )
 
     def _ABX(
-        self,
-        pooling: Pooling,
-        seed_n: int,
-        feature_function: Callable,
-        path_item_file: str,
-        seq_list: list[tuple[str, LiteralString]],
-        distance_mode: str,
-        step_feature: float,
-        speakermodes: list[str],
-        contextmodes: list[str],
-        cuda=False,
-        max_x_across=5,
-        max_size_group=30,
+            self,
+            pooling: Pooling,
+            seed_n: int,
+            feature_function: Callable,
+            path_item_file: str,
+            seq_list: list[tuple[str, LiteralString]],
+            distance_mode: str,
+            step_feature: float,
+            speakermodes: list[str],
+            contextmodes: list[str],
+            cuda=False,
+            max_x_across=5,
+            max_size_group=30,
     ):
         # Distance function
         distance_function = abx_g.get_distance_function_from_name(distance_mode)
@@ -251,7 +255,7 @@ class EvalABX:
                 )
 
                 scores[f"within-{contextmode}"] = (
-                    phone_confusion.sum() / (divisor_speaker > 0).sum()
+                        phone_confusion.sum() / (divisor_speaker > 0).sum()
                 ).item()
                 print(
                     f"...done. ABX {contextmode}_context within_speaker : {scores[f'within-{contextmode}']}"
@@ -286,14 +290,13 @@ class EvalABX:
                     group_confusion.sum(dim=0), divisor_speaker
                 )
                 scores[f"across-{contextmode}"] = (
-                    phone_confusion.sum() / (divisor_speaker > 0).sum()
+                        phone_confusion.sum() / (divisor_speaker > 0).sum()
                 ).item()
                 print(
                     f"...done. ABX {contextmode}_context across_speaker : {scores[f'across-{contextmode}']}"
                 )
 
         return scores
-
 
     def _find_all_files(self, path_dir, extension) -> list[tuple[str, LiteralString]]:
         """Returns: a list of tuples, each tuple having this format:
@@ -306,7 +309,6 @@ class EvalABX:
                 if f.endswith(extension):
                     out.append(((str(Path(f).stem)), os.path.join(root, f)))
         return out
-
 
     def _reduce_sparse_data(self, quotient, divisor):
         return quotient / (1e-08 * (divisor == 0) + divisor)
@@ -323,7 +325,6 @@ class EvalABX:
 
 
 def parse_args(argv):
-
     parser = argparse.ArgumentParser(description="ABX metric")
 
     parser.add_argument(
@@ -335,7 +336,7 @@ def parse_args(argv):
         type=str,
         default=PATH_CHECKPOINT,
         help="Path to a CPC checkpoint. If set, the apply the "
-        "model to the input data to compute the features",
+             "model to the input data to compute the features",
     )
     parser.add_argument(
         "--file_extension",
@@ -378,17 +379,17 @@ def parse_args(argv):
         type=int,
         default=MAX_SIZE_GROUP,
         help="Max size of a group while computing the"
-        "ABX score. A small value will make the code "
-        "faster but less precise.",
+             "ABX score. A small value will make the code "
+             "faster but less precise.",
     )
     parser.add_argument(
         "--max_x_across",
         type=int,
         default=MAX_X_ACROSS,
         help="When computing the ABX across score, maximum"
-        "number of speaker X to sample per couple A,B. "
-        " A small value will make the code faster but "
-        "less precise.",
+             "number of speaker X to sample per couple A,B. "
+             " A small value will make the code faster but "
+             "less precise.",
     )
     parser.add_argument(
         "--out",
@@ -413,46 +414,50 @@ def parse_args(argv):
         '--seq_norm',
         action='store_true',
         help='Used for CPC features only. '
-        'If activated, normalize each batch of feature across the '
-        'time channel before computing ABX.',
+             'If activated, normalize each batch of feature across the '
+             'time channel before computing ABX.',
     )
     parser.add_argument(
         '--max_size_seq',
         default=MAX_SIZE_SEQ,
         type=int,
         help='Used for CPC features only. Maximal number of frames to consider when computing a '
-        'batch of features.',
+             'batch of features.',
     )
     parser.add_argument(
         '--strict',
         action='store_true',
         help='Used for CPC features only. '
-        'If activated, each batch of feature will contain exactly '
-        'max_size_seq frames.',
+             'If activated, each batch of feature will contain exactly '
+             'max_size_seq frames.',
     )
 
     # multi-gpu / multi-node
     return parser.parse_args(argv)
 
+
 # CMDLINE
-def main(argv):
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv[1:]
+
     args = parse_args(argv)
-    eval_args = EvalArgs(path_data=args.path_data, 
-                    path_item_file=args.path_item_file, 
-                    path_checkpoint=args.path_checkpoint,
-                    file_extension=args.file_extension,
-                    feature_size=args.feature_size,
-                    cuda=args.cuda, 
-                    speaker_mode=args.speaker_mode,
-                    context_mode=args.context_mode,
-                    distance_mode=args.distance_mode,
-                    max_x_across=args.max_x_across,
-                    out=args.out,
-                    seed=args.seed,
-                    pooling=args.pooling,
-                    seq_norm=args.seq_norm,
-                    max_size_seq=args.max_size_seq,
-                    strict=args.strict)
+    eval_args = EvalArgs(path_data=args.path_data,
+                         path_item_file=args.path_item_file,
+                         path_checkpoint=args.path_checkpoint,
+                         file_extension=args.file_extension,
+                         feature_size=args.feature_size,
+                         cuda=args.cuda,
+                         speaker_mode=args.speaker_mode,
+                         context_mode=args.context_mode,
+                         distance_mode=args.distance_mode,
+                         max_x_across=args.max_x_across,
+                         out=args.out,
+                         seed=args.seed,
+                         pooling=args.pooling,
+                         seq_norm=args.seq_norm,
+                         max_size_seq=args.max_size_seq,
+                         strict=args.strict)
     scores = EvalABX().eval_abx(eval_args)
     if eval_args.out:
         out_dir = Path(eval_args.out)
@@ -470,6 +475,6 @@ def main(argv):
     with open(path_args, "w") as file:
         json.dump(vars(args), file, indent=2)
 
+
 if __name__ == "__main__":
-    args = sys.argv[1:]
-    main(args)
+    main()
