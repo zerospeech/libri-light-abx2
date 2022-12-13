@@ -1,5 +1,5 @@
-""" This code modified from: Phonetic task zerospeech 2021 """
-""" Modification was minimal: 
+""" This code modified from: Phonetic task zerospeech 2021
+Modification was minimal:
      - cleaning up terminology ("kind" vs "type" vs "subkind")
     - adding "contexttype" support separate from "speakertype"
         > results output has 1 extra column 
@@ -24,7 +24,7 @@ import joblib
 
 # from zerospeech2021 import exception
 # from zerospeech2021.phonetic_eval import eval_ABX
-import eval_ABX
+import zrc_abx2.eval_ABX as eval_ABX
 
 LIBRISPEECH_SETS = {
     'dev': ['dev-clean', 'dev-other'],
