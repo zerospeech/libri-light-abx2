@@ -5,7 +5,7 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, NamedTuple, Optional
+from typing import Callable, NamedTuple, Optional, List, Tuple
 
 import torch
 import numpy as np
@@ -168,11 +168,11 @@ class EvalABX:
             seed_n: int,
             feature_function: Callable,
             path_item_file: str,
-            seq_list: list[tuple[str, LiteralString]],
+            seq_list: List[Tuple[str, LiteralString]],
             distance_mode: str,
             step_feature: float,
-            speakermodes: list[str],
-            contextmodes: list[str],
+            speakermodes: List[str],
+            contextmodes: List[str],
             cuda=False,
             max_x_across=5,
             max_size_group=30,
@@ -298,12 +298,12 @@ class EvalABX:
 
         return scores
 
-    def _find_all_files(self, path_dir, extension) -> list[tuple[str, LiteralString]]:
+    def _find_all_files(self, path_dir, extension) -> List[Tuple[str, LiteralString]]:
         """Returns: a list of tuples, each tuple having this format:
         [0]: filename (no extension);
         [1]: absolute path of the file.
         """
-        out: list[tuple[str, LiteralString]] = []
+        out: List[Tuple[str, LiteralString]] = []
         for root, dirs, filenames in os.walk(path_dir):
             for f in filenames:
                 if f.endswith(extension):

@@ -1,7 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import math
 import random
-from typing import Any, Callable
+from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
 import torch
@@ -29,8 +29,8 @@ def normalize_with_singularity(x) -> torch.Tensor:
 
 def load_item_file(
         path_item_file: str,
-) -> tuple[
-    dict[str, list[list[Any]]], dict[str, int], dict[str, int], dict[str, int]
+) -> Tuple[
+    Dict[str, List[List[Any]]], Dict[str, int], Dict[str, int], Dict[str, int]
 ]:
     r"""Load a .item file indicating the triplets for the ABX score. The
     input file must have the following format:
@@ -54,12 +54,12 @@ def load_item_file(
 
     # key: fileID, value: a list of items, each item in turn given as a list of
     # onset, offset, context_id, phone_id, speaker_id (see below for the id constructions)
-    files_data: dict[str, list[list[Any]]] = {}
+    files_data: Dict[str, List[List[Any]]] = {}
 
     # Provide a phone_id for each phoneme type (0, 1 ...)
-    phone_match: dict[str, int] = {}
-    context_match: dict[str, int] = {}  # ... context_id ...
-    speaker_match: dict[str, int] = {}  # ... speaker_id ...
+    phone_match: Dict[str, int] = {}
+    context_match: Dict[str, int] = {}  # ... context_id ...
+    speaker_match: Dict[str, int] = {}  # ... speaker_id ...
 
     for line in item_f_lines:
         items = line.split()
@@ -136,7 +136,7 @@ class ABXFeatureLoader:
             pooling: Pooling,
             seed_n: int,
             path_item_file: str,
-            seqList: list[tuple[str, LiteralString]],
+            seqList: List[Tuple[str, LiteralString]],
             featureMaker: Callable,
             stepFeature: float,
             normalize: bool,
@@ -200,7 +200,7 @@ class ABXFeatureLoader:
             phone_end: Any,
             all_features: torch.Tensor,
             stepFeature: float,
-    ) -> tuple[int, int]:
+    ) -> Tuple[int, int]:
         index_start = max(0, int(math.ceil(stepFeature * phone_start - 0.5)))
         index_end = int(
             min(
@@ -219,8 +219,8 @@ class ABXFeatureLoader:
             context_id: Any,
             phone_id: Any,
             speaker_id: Any,
-            data: list[torch.Tensor],
-            manifest: list[Any],
+            data: List[torch.Tensor],
+            manifest: List[Any],
             pooling: Pooling,
     ) -> int:
         """Build and append the feature to the features data list.
@@ -237,8 +237,8 @@ class ABXFeatureLoader:
     def loadFromFileData(
             self,
             pooling: Pooling,
-            files_data: dict[str, list[list[Any]]],
-            seqList: list[tuple[str, LiteralString]],
+            files_data: Dict[str, List[List[Any]]],
+            seqList: List[Tuple[str, LiteralString]],
             feature_maker: Callable,
             normalize: bool,
     ):
@@ -250,7 +250,7 @@ class ABXFeatureLoader:
         self.INDEX_PHONE = 3
         self.INDEX_SPEAKER = 4
         # data[i] is the data for a given item. data is no longer discriminated by file
-        data: list[torch.Tensor] = []
+        data: List[torch.Tensor] = []
 
         totSize = 0
 
@@ -318,7 +318,7 @@ class ABXFeatureLoader:
         id_start, id_end = self.group_index[i_group][i_sub_group]
         return max([self.features[i][1] for i in range(id_start, id_end)])
 
-    def get_ids(self, index) -> tuple[int, int, int]:
+    def get_ids(self, index) -> Tuple[int, int, int]:
         context_id, phone_id, speaker_id = self.features[index][2:]
         return context_id, phone_id, speaker_id
 
