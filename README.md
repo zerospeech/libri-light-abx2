@@ -1,92 +1,98 @@
-# ABX_revamped
+# libri-light-abx2
 
-The ABX phonetic evaluation as used by ZeroSpeech challenge, in the process of being revamped to add "context-type" options (on-triphone, within-context, any-context).  
+The ABX phonetic evaluation metric for unsupervised representation learning as used by the ZeroSpeech challenge, now with context-type options (on-triphone, within-context, any-context). This module is a reworking of https://github.com/zerospeech/libri-light-abx, which in turn is a wrapper around https://github.com/facebookresearch/libri-light/tree/main/eval
+
   
-*For files used to get here and an explanation of all the differences between them, see also /scratch2/alyashenko/ABX_archived/ - there are many files with very similar names that built up to the ones collected in working order here, they are all archived in this directory with an explanation guiding through them.*  
+### Installation
   
-### Requirements?  
-  
-The requirements for this are the same as for ZS2021 - the environment "zr2021-eval" should be available (???) through oberon, which should include the CPC loading nightmare already pre-assembled.  
-  
-The only set-up one needs to do in place upon pulling this repo is compiling the ABX module's cython code:  
-  
-    cd abx_revamped/ABX_src
-    python setup.py build_ext --inplace
+You can install this module from pip directly using the following command : 
 
-### How to use this for CPC checkpoints?
+`pip install zerospeech-libriabx2`
 
-The ZS Challenge ABX evaluation is scattered across three layers: `evaluate.py` specifies the dataset (dev/test), `phonetic.py` specifies the subdataset (clean/other), and once that info is combined, `eval_ABX.py` can take the specific dataset-subdataset combination and runs the ABX evaluation on specified speaker and context modes. 
+Or you can install from source by cloning this repository and running: 
 
-At present, the ZS version of ABX doesn't accept CPC checkpoints at the upper two layers (`evaluate.py` or `phonetic.py`).  
-`eval_ABX.py` on its own *does* accept CPC checkpoints - this is just not carried up through the other two layers.  
-The short-term solution for this intermediate "revamping" step is, basically, **to run `eval_ABX.py` four times**: one for each of the dataset-subdataset combinations, `{dev, test} x {clean, other}`.  
-  
-To run `eval_ABX.py` in isolation from its outer layers, you will need to give it the following arguments:  
-  
-* `path_data`: path to the data, directory of flac files in this case - there are 4 of these  
-    * /scratch1/data/raw_data/LibriSpeech/dev-clean/
-    * /scratch1/data/raw_data/LibriSpeech/dev-other/
-    * /scratch1/data/raw_data/LibriSpeech/test-clean/
-    * /scratch1/data/raw_data/LibriSpeech/test-other/
-* `path_item_file`: path to the location of a corresponding textfile - there are accordingly 4 of these as well
-    * /scratch2/alyashenko/item_from_alignment/dev-clean/dev-clean.item
-    * /scratch2/alyashenko/item_from_alignment/dev-other/dev-other.item
-    * /scratch2/alyashenko/item_from_alignment/test-clean/test-clean.item
-    * /scratch2/alyashenko/item_from_alignment/test-other/test-other.item  
-* **the two above arguments must match when passed to eval_ABX: dev-clean with dev-clean, test-other with test-other, etc.**
-* `--path_checkpoint`: path to your CPC checkpoint
-* `--file_extension`: ".flac" in this case (the files in path_data)
-* `--feature_size` *(optional): size of a single feature, converts to frame step; default will be 100ms*  
-* `--speaker_mode` & `--context_mode` *(optional)*  
-    * *these both default to "all", i.e. {"within", "across"} and {"within", "without"}*  
-    * *you could specify just one of the two options per mode if you wanted, e.g. speaker_mode="across" contextmode="without"*
-* `--distance_mode` *(optional): this defaults to "cosine"; other options are 'euclidian', 'kl', 'kl_symmetric'*  
-* `--out`: directory that your scores will output to; default = sister to eval_ABX.py (i.e. this directory) 
+`pip install .`
 
-In total, the basic run would look as follows:  
-  
-    cd abx_revamped
-    conda activate zr2021-eval
-    eval_ABX.py --path_checkpoint=/.../abc.pt file_extension=.flac --out=/.../scores/ /scratch1/.../dev-clean/ /scratch2/.../dev-clean.item
+### Usage
+### From command line
 
-## What this was based on
+```
+usage: zrc-abx2 [-h] [--path_checkpoint PATH_CHECKPOINT]
+                [--file_extension {.pt,.npy,.wav,.flac,.mp3,.npz,.txt}]
+                [--feature_size FEATURE_SIZE] [--cuda]
+                [--speaker_mode {all,within,across}]
+                [--context_mode {all,within,any}]
+                [--distance_mode {euclidian,euclidean,cosine,kl,kl_symmetric}]
+                [--max_size_group MAX_SIZE_GROUP]
+                [--max_x_across MAX_X_ACROSS] [--out OUT] [--seed SEED]
+                [--pooling {none,mean,hamming}] [--seq_norm]
+                [--max_size_seq MAX_SIZE_SEQ] [--strict]
+                path_data path_item_file
 
-This repo is a reworking of the ABX phonetic evaluation used by ZS2021 - you can find the bulk of it [here](https://github.com/zerospeech/zerospeech2021/tree/65ba7cbb642a1d56282e7d1b86a728e09a9d6dc5/zerospeech2021). 
-The ABX evaluation supports two **speaker modes**: "within" speaker and "across" speaker.
+ABX metric
 
-`abx_revamped` mirrors many parts of the `phonetic_eval` directory, which in turn takes after the [libri-light ABX evaluation](https://github.com/facebookresearch/libri-light/tree/main/eval). This version ran on-triphone (the models were given an entire XYZ sequence)
-The parts of `abx_revamped` that aren't from ZS2021 or libri-light were borrowed from an on-phone version of ABX (the models were given Y, without X or Z). Hence the name `phone_abx_iterators` and its constituents. 
+positional arguments:
+  path_data             Path to directory containing the submission data
+  path_item_file        Path to the .item file containing the timestamps and
+                        transcriptions
 
-`abx_revamped` also takes from ZS2021 the file `phonetic.py`, which uses `phonetic_eval`'s contents in ZS-specific ways. [evaluate.py](https://github.com/zerospeech/zerospeech2021/blob/65ba7cbb642a1d56282e7d1b86a728e09a9d6dc5/zerospeech2021/cli/evaluate.py) is the real end of the line in ZS2021, but its functions are not affected by the alterations in `abx_revamped`, so it can be kept as is, separate from the ABX evaluation.
+optional arguments:
+  -h, --help            show this help message and exit
+  --path_checkpoint PATH_CHECKPOINT
+                        Path to a CPC checkpoint. If set, apply the model to
+                        the input data to compute the features
+  --file_extension {.pt,.npy,.wav,.flac,.mp3,.npz,.txt}
+  --feature_size FEATURE_SIZE
+                        Size (in s) of one feature
+  --cuda                Use the GPU to compute distances
+  --speaker_mode {all,within,across}
+                        Choose the speaker mode of the ABX score to compute
+  --context_mode {all,within,any}
+                        Choose the context mode of the ABX score to compute
+  --distance_mode {euclidian,euclidean,cosine,kl,kl_symmetric}
+                        Choose the kind of distance to use to compute the ABX
+                        score.
+  --max_size_group MAX_SIZE_GROUP
+                        Max size of a group while computing the ABX score. A
+                        small value will make the code faster but less
+                        precise.
+  --max_x_across MAX_X_ACROSS
+                        When computing the ABX across score, maximum number of
+                        speaker X to sample per couple A,B. A small value will
+                        make the code faster but less precise.
+  --out OUT             Path where the results should be saved
+  --seed SEED           Seed to use in random sampling.
+  --pooling {none,mean,hamming}
+                        Type of pooling over frame representations of items.
+  --seq_norm            Used for CPC features only. If activated, normalize
+                        each batch of feature across the time channel before
+                        computing ABX.
+  --max_size_seq MAX_SIZE_SEQ
+                        Used for CPC features only. Maximal number of frames
+                        to consider when computing a batch of features.
+  --strict              Used for CPC features only. If activated, each batch
+                        of feature will contain exactly max_size_seq frames.
+```
+### Python API
+You can also call the abx evaluation from python code. You can use the following example:
 
-##### Accordingly, the requirements for this match those of the other ABX versions: ABX modules and CPC loading capability. 
+```
+import zrc_abx2
 
-## What this is
+args = zrc_abx2.EvalArgs(
+    path_data= "/location/to/representations/",
+    path_item_file= "/location/to/file.item",
+    **other_options
+)
 
-`abx_revamped` runs on-phone (like phone_ABX), and keeps track of context (like original ABX). Per previous example, the model is given some phone Y and is told that the context was the phones X and Z.
+result = zrc_abx2.EvalABX().eval_abx(args)
+```
 
-Since we have these two ABX versions' approaches to context, `abx_revamped` offers either "within" context (default original ABX behaviour) or "any" context (default phone_ABX behaviour). These are the two **context modes** - a new variable in this ABX version. 
+## Information on evaluation conditions
+A new  variable in this ABX version is context.
+In the within-context condition, a, b, and x have the same surrounding context (i.e. the same preceding and following phoneme). any-context ignores the surrounding context; typically, it varies. 
 
-The code is reworked to accomodate context modes. On the user side, this parallels the way speaker modes were accomodated already, and is integrated with this version of `phonetic.py` (the script that runs the `eval_ABX.py` evaluation for ZS submissions).
+For the within-context and any-context comparison, use an item file that extracts phonemes (rather than XYZ triphones). For the on-triphone condition, which is still available, use an item file that extracts triphones (just like in the previous abx evaluation), and then run it within-context (which was the default behavior of the previous abx evaluation). any-context is not used for the on-triphone version due to excessive noise that would be included in the representation.
 
-## What this will be
-
-At present, `abx_revamped` is a Frankenstein assembly of two sub-versions of the ABX evaluation. Rather than truly streamline the approach to {within, across, any} for any variable, it picks and chooses some combinations, so not all are available. "any" is only available as a context mode, "across" is only available as a speaker mode; therefore we get {within, across} x {within, any} = 4 possible mode combinations.
-
-Right now, the `phone_abx_iterators` code disregards context entirely, hence being called "any" context, while the fundamental `abx_iterators` code only varies for speaker modes and always operates "within" context. 
-Neither version has "across context" code, nor does either version have "any speaker" code.
-
-To add these missing options, the ABX evaluation will need a more thorough tearing down.
-
-The {within} context x {across, within} speaker mechanism is written out in the ZS2021 ABX (without specifying context as a variable - just setting context to permanent "within"). The simplest modification would generalise this mechanism to "within X, within/across Y", allowing "within speaker"+"across context".  
-Likewise, the {any} context mechanism is written out for {across, within} speaker in phone_ABX, setting context to permanent "any". This too could be generalised to "any X, within/across Y", allowing the "any speaker"+"within/across context" combinations.  
-Finally, the "across speaker"+"across context" and "any speaker"+"any context" combinations will need to be written up specially for this `abx_revamped` evaluation.  
-
-The result should be a neat 3x3, handled by different Iterator classes in abx_iterators:  
-`{within, across, any}` x `{within, across, any}`  
-       
-* {within} x {within, across} (ABXWithinWithinGroupIterator, ABXWithinAcrossGroupIterator)  
-* {any} x {within, across} (ABXAnyWithinGroupIterator, ABXAnyAcrossGroupIterator)  
-* {across} x {across} (ABXAcrossAcrossGroupIterator)  
-* {any} x {any} (ABXAnyAnyGroupIterator)
+Like in the previous version, it is also possible to run within-speaker (a, b, x are all from the same speaker) and across-speaker (a and b are from the same speaker, x is from another) evaluations. So there are four phoneme-based evaluation combinations in total: within_s-within_c, within_s-any-c, across_s-within_c, across_s-any_c; and two triphone-based evaluation combinations: within_s-within_c, across_s-within_c. 
 
