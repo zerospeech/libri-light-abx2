@@ -62,9 +62,6 @@ def evaluate(
     directory.
     """
     try:
-        # this section originally restricted "test" to evaluations run by the ZS2021 team
-        # a restriction which is unnecessary in this stand-alone version 
-        # (but can readily be resurrected from /archived/evaluate.py)
         kinds = ['dev', 'test']
 
         # ensures the dataset exists

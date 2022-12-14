@@ -328,14 +328,14 @@ def parse_args(argv):
     parser = argparse.ArgumentParser(description="ABX metric")
 
     parser.add_argument(
-        "path_data", type=str, help="Path to directory containing the data"
+        "path_data", type=str, help="Path to directory containing the submission data"
     )
-    parser.add_argument("path_item_file", type=str, help="Path to the .item file")
+    parser.add_argument("path_item_file", type=str, help="Path to the .item file containing the timestamps and transcriptions")
     parser.add_argument(
         "--path_checkpoint",
         type=str,
         default=PATH_CHECKPOINT,
-        help="Path to a CPC checkpoint. If set, the apply the "
+        help="Path to a CPC checkpoint. If set, apply the "
              "model to the input data to compute the features",
     )
     parser.add_argument(
