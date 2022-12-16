@@ -1,7 +1,8 @@
-Some of the files under the ABX_src module are licenced separately and all rights belong to the corresponding creators.
-The rest of the modifications are licenced under the MIT licence below
+This licence applies to all files in the cpc module.
 
-Copyright 2022 (c) CoML team (hybrid entity belonging to ENS/PSL/Inria).
+MIT License
+
+Copyright (c) Facebook, Inc. and its affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
