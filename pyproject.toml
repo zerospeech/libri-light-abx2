@@ -23,6 +23,7 @@ dependencies = [
     'soundfile',
     'torchaudio',
     'numpy',
+    'pandas'
 ]
 dynamic = ["version"]
 
