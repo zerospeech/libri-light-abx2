@@ -138,7 +138,6 @@ class phoneABXFeatureLoader:
     def __init__(
             self,
             pooling: Pooling,
-            seed_n: int,
             path_item_file: str,
             seqList: List[Tuple[str, LiteralString]],
             featureMaker: Callable,
@@ -164,7 +163,6 @@ class phoneABXFeatureLoader:
         you have a collection of features files in the torch .pt format then
         you can just set featureMaker = torch.load.
         """
-        random.seed(seed_n)
         files_data, self.phone_match, self.speaker_match = load_phone_item_file(
             path_item_file
         )
@@ -338,11 +336,11 @@ class phoneABXFeatureLoader:
     def get_n_sub_group(self, index_sub_group):
         return len(self.group_index[index_sub_group])
 
-    def get_iterator(self, mode, max_size_group):
+    def get_iterator(self, mode, max_size_group, seed_n):
         if mode == "within":
-            return phoneABXWithinGroupIterator(self, max_size_group)
+            return phoneABXWithinGroupIterator(self, max_size_group, seed_n)
         if mode == "across":
-            return phoneABXAcrossGroupIterator(self, max_size_group)
+            return phoneABXAcrossGroupIterator(self, max_size_group, seed_n)
         raise ValueError(f"Invalid mode: {mode}")
 
 
@@ -351,10 +349,11 @@ class phoneABXIterator:
     Base class building ABX's triplets.
     """
 
-    def __init__(self, abxDataset, max_size_group):
+    def __init__(self, abxDataset, max_size_group, seed_n):
         self.max_size_group = max_size_group
         self.dataset = abxDataset
         self.len = 0
+        random.seed(seed_n)
 
         self.index_sp, self.groups_sp = get_features_group(
             abxDataset.features,
@@ -405,10 +404,10 @@ class phoneABXWithinGroupIterator(phoneABXIterator):
     Iterator giving the triplets for the ABX within score.
     """
 
-    def __init__(self, abxDataset, max_size_group):
+    def __init__(self, abxDataset, max_size_group, seed_n):
 
         super(phoneABXWithinGroupIterator, self).__init__(
-            abxDataset, max_size_group
+            abxDataset, max_size_group, seed_n
         )
         self.symmetric = True
 
@@ -457,10 +456,10 @@ class phoneABXAcrossGroupIterator(phoneABXIterator):
     Iterator giving the triplets for the ABX across score.
     """
 
-    def __init__(self, abxDataset, max_size_group):
+    def __init__(self, abxDataset, max_size_group, seed_n):
 
         super(phoneABXAcrossGroupIterator, self).__init__(
-            abxDataset, max_size_group
+            abxDataset, max_size_group, seed_n
         )
         self.symmetric = False
         self.get_speakers_from_p = {}

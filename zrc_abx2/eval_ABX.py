@@ -235,7 +235,6 @@ class EvalABX:
             if contextmode == "within":
                 ABXDataset = abx_it.ABXFeatureLoader(
                     pooling,
-                    seed_n,
                     path_item_file,
                     seq_list,
                     feature_function,
@@ -247,7 +246,6 @@ class EvalABX:
             elif contextmode == "any":
                 ABXDataset = phone_abx_it.phoneABXFeatureLoader(
                     pooling,
-                    seed_n,
                     path_item_file,
                     seq_list,
                     feature_function,
@@ -263,7 +261,9 @@ class EvalABX:
             # ABX within
             if "within" in speakermodes:
                 print(f"Computing ABX {contextmode} context within speakers...")
-                ABXIterator = ABXDataset.get_iterator("within", max_size_group)
+                ABXIterator = ABXDataset.get_iterator(
+                    "within", max_size_group, seed_n
+                )
                 group_confusion = abx_g.get_abx_scores_dtw_on_group(
                     ABXIterator, distance_function, ABXIterator.symmetric, pooling
                 )
@@ -306,7 +306,9 @@ class EvalABX:
             # ABX across
             if "across" in speakermodes:
                 print(f"Computing ABX {contextmode} context across speakers...")
-                ABXIterator = ABXDataset.get_iterator("across", max_size_group)
+                ABXIterator = ABXDataset.get_iterator(
+                    "across", max_size_group, seed_n
+                )
                 ABXIterator.max_x = max_x_across
                 group_confusion = abx_g.get_abx_scores_dtw_on_group(
                     ABXIterator, distance_function, ABXIterator.symmetric, pooling

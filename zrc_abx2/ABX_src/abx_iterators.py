@@ -134,7 +134,6 @@ class ABXFeatureLoader:
     def __init__(
             self,
             pooling: Pooling,
-            seed_n: int,
             path_item_file: str,
             seqList: List[Tuple[str, LiteralString]],
             featureMaker: Callable,
@@ -161,7 +160,6 @@ class ABXFeatureLoader:
         you can just set featureMaker = torch.load.
         """
 
-        random.seed(seed_n)
         (
             files_data,
             self.context_match,
@@ -348,11 +346,11 @@ class ABXFeatureLoader:
     def get_n_sub_group(self, index_sub_group):
         return len(self.group_index[index_sub_group])
 
-    def get_iterator(self, mode, max_size_group):
+    def get_iterator(self, mode, max_size_group, seed_n):
         if mode == "within":
-            return ABXWithinGroupIterator(self, max_size_group)
+            return ABXWithinGroupIterator(self, max_size_group, seed_n)
         if mode == "across":
-            return ABXAcrossGroupIterator(self, max_size_group)
+            return ABXAcrossGroupIterator(self, max_size_group, seed_n)
         if mode == "any":
             raise ValueError(f"Mode not yet supported: {mode}")
         raise ValueError(f"Invalid mode: {mode}")
@@ -363,10 +361,11 @@ class ABXIterator:
     Base class building ABX's triplets.
     """
 
-    def __init__(self, abxDataset, max_size_group):
+    def __init__(self, abxDataset, max_size_group, seed_n):
         self.max_size_group = max_size_group
         self.dataset = abxDataset
         self.len = 0
+        random.seed(seed_n)
 
         self.index_csp, self.groups_csp = get_features_group(
             abxDataset.features,
@@ -421,9 +420,9 @@ class ABXWithinGroupIterator(ABXIterator):
     Iterator giving the triplets for the ABX within score.
     """
 
-    def __init__(self, abxDataset, max_size_group):
+    def __init__(self, abxDataset, max_size_group, seed_n):
 
-        super(ABXWithinGroupIterator, self).__init__(abxDataset, max_size_group)
+        super(ABXWithinGroupIterator, self).__init__(abxDataset, max_size_group, seed_n)
         self.symmetric = True
 
         for context_group in self.groups_csp:  # always within context
@@ -474,9 +473,9 @@ class ABXAcrossGroupIterator(ABXIterator):
     Iterator giving the triplets for the ABX across score.
     """
 
-    def __init__(self, abxDataset, max_size_group):
+    def __init__(self, abxDataset, max_size_group, seed_n):
 
-        super(ABXAcrossGroupIterator, self).__init__(abxDataset, max_size_group)
+        super(ABXAcrossGroupIterator, self).__init__(abxDataset, max_size_group, seed_n)
         self.symmetric = False
         self.get_speakers_from_cp = {}
         self.max_x = 5
