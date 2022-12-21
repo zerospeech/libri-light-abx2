@@ -3,6 +3,7 @@ import argparse
 import json
 import os
 import sys
+import warnings
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, Literal, NamedTuple, Optional, List, Tuple
@@ -173,19 +174,29 @@ class EvalABX:
         for key, val in scores.items():
             result: Dict[str, Any] = {}
             path_data = eval_args.path_data
+            item_f = eval_args.path_item_file
             result["path_data"] = path_data
-            result["item-file"] = eval_args.path_item_file
-            dataset_info = os.path.basename(os.path.normpath(path_data)).split(
-                "-"
-            )
-            result["dataset"] = dataset_info[0]
-            result["sub-dataset"] = dataset_info[1]
+            result["item-file"] = item_f
+            try:
+                dataset = Path(item_f).stem.split("-")
+                result["dataset"] = dataset[0]
+                result["sub-dataset"] = dataset[1]
+            except:
+                warnings.warn(
+                    "Unable to retrieve dataset names for the results. Proceeding.",
+                    RuntimeWarning,
+                )
             result["pooling"] = eval_args.pooling
             result["seed"] = eval_args.seed
             result["run-date"] = datetime.now().strftime("%Y-%m-%d")
             result["score"] = val
-            result["abx-s-condition"] = key.split("-")[0]
-            result["abx-c-condition"] = key.split("-")[1]
+            try:
+                result["abx-s-condition"] = key.split("-")[0]
+                result["abx-c-condition"] = key.split("-")[1]
+            except:
+                raise ValueError(
+                    "Unable to retrieve abx condition definitions for the results."
+                )
             results.append(result)
         return results
 
