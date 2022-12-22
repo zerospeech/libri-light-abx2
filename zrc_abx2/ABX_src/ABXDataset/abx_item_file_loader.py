@@ -44,12 +44,12 @@ class ABXItemFileLoader:
 
         # key: fileID, value: a list of items, each item in turn given as a list of
         # onset, offset, context_id, phone_id, speaker_id (see below for the id constructions)
-        files_data: dict[str, list[ItemData]] = {}
+        files_data: Dict[str, List[ItemData]] = {}
 
         # Provide a phone_id for each phoneme type (a la B: 0, N: 1 ...)
-        phone_match: dict[str, int] = {}
-        context_match: dict[str, int] = {}  # ... context_id ...
-        speaker_match: dict[str, int] = {}  # ... speaker_id ...
+        phone_match: Dict[str, int] = {}
+        context_match: Dict[str, int] = {}  # ... context_id ...
+        speaker_match: Dict[str, int] = {}  # ... speaker_id ...
 
         for line in item_f_lines:
             items = line.split()

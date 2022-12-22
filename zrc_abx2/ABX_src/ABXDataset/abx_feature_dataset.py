@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, List, Tuple
 
 import torch
 
@@ -14,11 +14,11 @@ class ABXFeatureDataset:
     data: torch.Tensor
     # The manifest lists where in data each item is along with the
     # encoded phone, context, and speaker ids from the transcription
-    features_manifest: list[ManifestFeatureItem]
+    features_manifest: List[ManifestFeatureItem]
     feature_dim: Any  # TODO: Can we specify the type?
     item_file: ItemFile
 
-    def get_ids(self, index) -> tuple[int, int, int]:
+    def get_ids(self, index) -> Tuple[int, int, int]:
         phone_id = self.features_manifest[index][PHONE_IDX]
         speaker_id = self.features_manifest[index][SPEAKER_IDX]
         context_id = self.features_manifest[index][CONTEXT_IDX]

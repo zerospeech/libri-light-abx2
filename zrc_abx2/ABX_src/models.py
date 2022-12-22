@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from typing import NamedTuple
+from typing import Dict, NamedTuple, List
 
 import torch
 
@@ -20,11 +20,11 @@ class ItemData(NamedTuple):
 
 class ItemFile(NamedTuple):
     # key: fileid, value: list of items in the file
-    files_data: dict[str, list[ItemData]]
+    files_data: Dict[str, List[ItemData]]
     # Encodings (e.g. phone_match might be A: 3, N: 2)
-    context_match: dict[str, int]
-    phone_match: dict[str, int]
-    speaker_match: dict[str, int]
+    context_match: Dict[str, int]
+    phone_match: Dict[str, int]
+    speaker_match: Dict[str, int]
 
 
 ## ABXFeatureDataset models

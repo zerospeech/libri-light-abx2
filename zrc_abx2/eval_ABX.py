@@ -14,8 +14,8 @@ import pandas
 from typing_extensions import LiteralString
 
 import zrc_abx2.ABX_src.abx_group_computation as abx_g
-import zrc_abx2.ABX_src.abx_iterators as abx_it  # <- within context
-import zrc_abx2.ABX_src.phone_abx_iterators as phone_abx_it  # <- without context
+from zrc_abx2.ABX_src.ABXDataset.abx_feature_loader import ABXFeatureLoader
+from zrc_abx2.ABX_src.ABXIterators.abx_iterator_factory import IteratorFactory
 from zrc_abx2.ABX_src.models import Pooling
 from zrc_abx2.cpc.feature_loader import FeatureModule, buildFeature, loadModel
 
@@ -228,41 +228,35 @@ class EvalABX:
 
         # ABX calculations differ per context mode
         for contextmode in contextmodes:
+            if not contextmode in ("within", "any"):
+                raise ValueError(f"Contextmode not supported: {contextmode}")
 
-            # ABXDataset at present depends on the contextmode
-            # (as does the dimension value used for some arrays)
-            # This may change with better streamlining
+            ABXDataset = ABXFeatureLoader(
+                pooling,
+                path_item_file,
+                seq_list,
+                feature_function,
+                step_feature,
+                True,
+            ).loadFromFileData()
+
+            dimnwithin = None
+            dimnacross: list[int] = []
             if contextmode == "within":
-                ABXDataset = abx_it.ABXFeatureLoader(
-                    pooling,
-                    path_item_file,
-                    seq_list,
-                    feature_function,
-                    step_feature,
-                    True,
-                )
-                dimnwithin = 3
+                dimnwithin = 3  # TODO: can we make these programmatic?
                 dimnacross = [3, 4]
             elif contextmode == "any":
-                ABXDataset = phone_abx_it.phoneABXFeatureLoader(
-                    pooling,
-                    path_item_file,
-                    seq_list,
-                    feature_function,
-                    step_feature,
-                    True,
-                )
-                dimnwithin = None  # not actually used
+                # dimnwithin not used in this condition.
                 dimnacross = [3]
 
             if cuda:
                 ABXDataset.cuda()
 
-            # ABX within
+            # ABX within speaker
             if "within" in speakermodes:
                 print(f"Computing ABX {contextmode} context within speakers...")
-                ABXIterator = ABXDataset.get_iterator(
-                    "within", max_size_group, seed_n
+                ABXIterator = IteratorFactory.get_iterator(
+                    ABXDataset, contextmode, "within", max_size_group, seed_n
                 )
                 group_confusion = abx_g.get_abx_scores_dtw_on_group(
                     ABXIterator, distance_function, ABXIterator.symmetric, pooling
@@ -306,10 +300,10 @@ class EvalABX:
             # ABX across
             if "across" in speakermodes:
                 print(f"Computing ABX {contextmode} context across speakers...")
-                ABXIterator = ABXDataset.get_iterator(
-                    "across", max_size_group, seed_n
+                ABXIterator = IteratorFactory.get_iterator(
+                    ABXDataset, contextmode, "across", max_size_group, seed_n
                 )
-                ABXIterator.max_x = max_x_across
+                ABXIterator.max_x = max_x_across # Only used in across-speaker
                 group_confusion = abx_g.get_abx_scores_dtw_on_group(
                     ABXIterator, distance_function, ABXIterator.symmetric, pooling
                 )
@@ -320,6 +314,8 @@ class EvalABX:
                     group_confusion.size(),
                 )
                 divisor_context = torch.sparse.sum(index_, dimnacross).to_dense()
+                if not dimnacross:
+                    raise ValueError("dimnacross not set")
                 group_confusion = torch.sparse.sum(
                     group_confusion, dimnacross
                 ).to_dense()
@@ -452,10 +448,7 @@ def parse_args(argv):
         help="Path where the results should be saved.",
     )
     parser.add_argument(
-        "--seed",
-        type=int,
-        default=SEED,
-        help="Seed to use in random sampling.",
+        "--seed", type=int, default=SEED, help="Seed to use in random sampling."
     )
     parser.add_argument(
         "--pooling",
