@@ -7,7 +7,8 @@ import numpy as np
 import torch
 from typing_extensions import LiteralString
 
-from .models import Pooling
+from .models import *
+from .ABXDataset.abx_item_file_loader import ABXItemFileLoader
 
 
 def normalize_with_singularity(x) -> torch.Tensor:
@@ -25,76 +26,6 @@ def normalize_with_singularity(x) -> torch.Tensor:
     border_vect = torch.zeros((S, 1), dtype=x.dtype, device=x.device) + 1e-12
     border_vect[zero_vals] = -2 * 1e12
     return torch.cat([x, border_vect], dim=1)
-
-
-def load_item_file(
-        path_item_file: str,
-) -> Tuple[
-    Dict[str, List[List[Any]]], Dict[str, int], Dict[str, int], Dict[str, int]
-]:
-    r"""Load a .item file indicating the triplets for the ABX score. The
-    input file must have the following format:
-    line 0 : whatever (not read)
-    line > 0: #file_ID onset offset #phone prev-phone next-phone speaker
-    onset : begining of the triplet (in s)
-    onset : end of the triplet (in s)
-
-    Returns a tuple of files_data, context_match, phone_match, speaker_match where
-            files_data: dictionary whose key is the file id, and the value is the list of item tokens in that file, each item in turn
-                            given as a list of onset, offset, context_id, phone_id, speaker_id.
-            phone_match is a dictionary of the form { phone_str: phone_id }.
-            context_match is a dictionary of the form { prev_phone_str+next_phone_str: context_id }.
-            speaker_match is a dictionary of the form { speaker_str: speaker_id }.
-            The id in each case is iterative (0, 1 ...)
-    """
-    with open(path_item_file, "r") as file:
-        item_f_lines = file.readlines()[1:]
-
-    item_f_lines = [x.replace("\n", "") for x in item_f_lines]
-
-    # key: fileID, value: a list of items, each item in turn given as a list of
-    # onset, offset, context_id, phone_id, speaker_id (see below for the id constructions)
-    files_data: Dict[str, List[List[Any]]] = {}
-
-    # Provide a phone_id for each phoneme type (0, 1 ...)
-    phone_match: Dict[str, int] = {}
-    context_match: Dict[str, int] = {}  # ... context_id ...
-    speaker_match: Dict[str, int] = {}  # ... speaker_id ...
-
-    for line in item_f_lines:
-        items = line.split()
-        assert len(items) == 7  # assumes 7-column files
-        fileID = items[0]
-        if fileID not in files_data:
-            files_data[fileID] = []
-
-        onset, offset = float(items[1]), float(items[2])
-        phone = items[3]
-
-        speaker = items[6]
-        context = "+".join([items[4], items[5]])
-
-        if phone not in phone_match:
-            # We increment the id by 1 each time a new phoneme type is found
-            s = len(phone_match)
-            phone_match[phone] = s
-        phone_id = phone_match[phone]
-
-        if context not in context_match:
-            s = len(context_match)
-            context_match[context] = s
-        context_id = context_match[context]
-
-        if speaker not in speaker_match:
-            s = len(speaker_match)
-            speaker_match[speaker] = s
-        speaker_id = speaker_match[speaker]
-
-        files_data[fileID].append(
-            [onset, offset, context_id, phone_id, speaker_id]
-        )
-
-    return files_data, context_match, phone_match, speaker_match
 
 
 def get_features_group(in_data, index_order):
@@ -160,16 +91,11 @@ class ABXFeatureLoader:
         you can just set featureMaker = torch.load.
         """
 
-        (
-            files_data,
-            self.context_match,
-            self.phone_match,
-            self.speaker_match,
-        ) = load_item_file(path_item_file)
+        self.item_file = ABXItemFileLoader().load_item_file(path_item_file)
         self.seqNorm = True
         self.stepFeature = stepFeature
         self.loadFromFileData(
-            pooling, files_data, seqList, featureMaker, normalize
+            pooling, self.item_file.files_data, seqList, featureMaker, normalize
         )
 
     def pool(self, feature: torch.Tensor, pooling: Pooling) -> torch.Tensor:
@@ -235,7 +161,7 @@ class ABXFeatureLoader:
     def loadFromFileData(
             self,
             pooling: Pooling,
-            files_data: Dict[str, List[List[Any]]],
+            files_data: Dict[str, list[ItemData]],
             seqList: List[Tuple[str, LiteralString]],
             feature_maker: Callable,
             normalize: bool,
@@ -271,15 +197,12 @@ class ABXFeatureLoader:
             # Each item is given as a list of onset, offset, context_id, phone_id, speaker_id
             phone_data = files_data[fileID]
 
-            for (
-                    phone_start,
-                    phone_end,
-                    context_id,
-                    phone_id,
-                    speaker_id,
-            ) in phone_data:
+            for item_data in phone_data:
                 index_start, index_end = self.start_end_indices(
-                    phone_start, phone_end, all_features, self.stepFeature
+                    item_data.onset,
+                    item_data.offset,
+                    all_features,
+                    self.stepFeature,
                 )
                 if (
                         index_start >= all_features.size(0)
@@ -291,9 +214,9 @@ class ABXFeatureLoader:
                     index_end,
                     totSize,
                     all_features,
-                    context_id,
-                    phone_id,
-                    speaker_id,
+                    item_data.context_id,
+                    item_data.phone_id,
+                    item_data.speaker_id,
                     data,
                     self.features,
                     pooling,
@@ -312,10 +235,6 @@ class ABXFeatureLoader:
     def cpu(self):
         self.data = self.data.cpu()
 
-    def get_max_group_size(self, i_group, i_sub_group):
-        id_start, id_end = self.group_index[i_group][i_sub_group]
-        return max([self.features[i][1] for i in range(id_start, id_end)])
-
     def get_ids(self, index) -> Tuple[int, int, int]:
         context_id, phone_id, speaker_id = self.features[index][2:]
         return context_id, phone_id, speaker_id
@@ -328,23 +247,17 @@ class ABXFeatureLoader:
             (context_id, phone_id, speaker_id),
         )
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.features)
 
     def get_n_speakers(self):
-        return len(self.speaker_match)
+        return len(self.item_file.speaker_match)
 
     def get_n_context(self):
-        return len(self.context_match)
+        return len(self.item_file.context_match)
 
     def get_n_phone(self):
-        return len(self.phone_match)
-
-    def get_n_groups(self):
-        return len(self.group_index)
-
-    def get_n_sub_group(self, index_sub_group):
-        return len(self.group_index[index_sub_group])
+        len(self.item_file.phone_match)
 
     def get_iterator(self, mode, max_size_group, seed_n):
         if mode == "within":
