@@ -150,7 +150,7 @@ def loc_dtw(data,
 
 # TODO: maybe define a protocol for group_iterator (it can be 
 # 4 different classes right now)
-def get_abx_scores_dtw_on_group(group_iterator: Union[ABXWithinGroupIterator, ABXAcrossGroupIterator, ABXWithinGroupIteratorAnyContext, ABXAcrossGroupIteratorAnyContext],
+def get_abx_scores_dtw_on_group(group_iterator: Union[ABXWithinGroupIterator, ABXAcrossGroupIterator],
                                 distance_function: Callable[..., torch.Tensor],
                                 symmetric: bool, pooling: Pooling):
 

@@ -78,6 +78,8 @@ def get_features_group(
         for i in range(n_orders, 0, -1):
             curr_group[i - 1].append(curr_group[i])
         out_groups += curr_group[0]
+    if type(out_groups[0][0]) == tuple and len(out_groups[0][0]) == 2:
+        out_groups = [out_groups]
     return in_index, out_groups
 
 
@@ -146,17 +148,12 @@ class ABXIterator:
     def _get_loc_id(
         self, data_item: ABXFeaturesDataItem, context_type: ContextType
     ) -> Union[Tuple[int, int, int], Tuple[int, int]]:
-        if context_type == ContextType.WITHIN:
+        if context_type == ContextType.WITHIN or context_type == ContextType.ANY:
             return (
                 data_item.context_id,
                 data_item.phone_id,
-                data_item.speaker_id,
-            )
-        elif context_type == ContextType.ANY:
-            return (
-                data_item.phone_id,
-                data_item.speaker_id,
-            )
+                data_item.speaker_id
+                )
         else:
             raise ValueError("Invalid context type.")
 

@@ -240,14 +240,9 @@ class EvalABX:
                 True,
             ).loadFromFileData()
 
-            dimnwithin = None
-            dimnacross: list[int] = []
-            if contextmode == "within":
-                dimnwithin = 3  # TODO: can we make these programmatic?
-                dimnacross = [3, 4]
-            elif contextmode == "any":
-                # dimnwithin not used in this condition.
-                dimnacross = [3]
+            # TODO: Check for any_context
+            dimnwithin = 3  # TODO: can we make these programmatic?
+            dimnacross = [3, 4]
 
             if cuda:
                 ABXDataset.cuda()
@@ -268,20 +263,17 @@ class EvalABX:
                     torch.ones((n_data), dtype=torch.float),
                     group_confusion.size(),
                 )
-                if contextmode == "any":
-                    divisor_context = index_.to_dense()
-                    group_confusion = group_confusion.to_dense()
-                else:
-                    divisor_context = torch.sparse.sum(
+                # TODO: Check for any_context
+                divisor_context = torch.sparse.sum(
                         index_, dimnwithin
                     ).to_dense()
-                    group_confusion = torch.sparse.sum(
+                group_confusion = torch.sparse.sum(
                         group_confusion, dimnwithin
                     ).to_dense()
-                    group_confusion = self._reduce_sparse_data(
+                group_confusion = self._reduce_sparse_data(
                         group_confusion, divisor_context
                     )
-
+                    
                 S, p1, p2 = group_confusion.size()
 
                 index_speaker = divisor_context > 0
