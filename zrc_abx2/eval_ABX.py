@@ -524,7 +524,7 @@ def main(argv=None):
     with open(out_dir / f"ABX_scores.csv", "a") as file:
         df.to_csv(file, mode="a", index=False, header=file.tell() == 0)
 
-    t = datetime.now().strftime("%Y-%m-%d")
+    t = datetime.now().strftime("%Y-%m-%d_%H-%M")
     path_args = out_dir / f"ABX_args_{t}.json"
     with open(path_args, "w") as file:
         json.dump(vars(args), file, indent=2)
