@@ -107,7 +107,7 @@ def _loadCPCFeatureMaker(
 
 class EvalABX:
     # INTERFACE
-    def eval_abx(self, args: EvalArgs) -> Dict[str, float]:
+    def eval_abx(self, args: EvalArgs) -> List[Dict[str, Any]]:
         print("eval_ABX args:")
         print(args)
         if args.path_checkpoint is None:
@@ -152,7 +152,7 @@ class EvalABX:
         # Get the list of sequences
         seq_list = self._find_all_files(args.path_data, args.file_extension)
 
-        return self._ABX(
+        scores = self._ABX(
             self._pooling_type(args.pooling),
             args.seed,
             feature_function,
@@ -166,6 +166,8 @@ class EvalABX:
             max_x_across=args.max_x_across,
             max_size_group=args.max_size_group,
         )
+
+        return self.formatted_abx_results(scores, args)
 
     def formatted_abx_results(
         self, scores: Dict[str, float], eval_args: EvalArgs
@@ -509,7 +511,6 @@ def main(argv=None):
     )
     abx_evaluator = EvalABX()
     scores = abx_evaluator.eval_abx(eval_args)
-    out_results = abx_evaluator.formatted_abx_results(scores, eval_args)
 
     if eval_args.out:
         out_dir = Path(eval_args.out)
@@ -520,7 +521,7 @@ def main(argv=None):
             "Unable to find output path from args.out or args.path_checkpoint."
         )
     out_dir.mkdir(exist_ok=True)
-    df = pandas.DataFrame(out_results)
+    df = pandas.DataFrame(scores)
     with open(out_dir / f"ABX_scores.csv", "a") as file:
         df.to_csv(file, mode="a", index=False, header=file.tell() == 0)
 
