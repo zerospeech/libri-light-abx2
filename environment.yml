@@ -6,9 +6,10 @@ channels:
 dependencies:
     - python >=3.8
     - tqdm
-    - pytorch
+    # can't mix n' match pytorch versions btw conda-forge and pytorch channels
+    - pytorch::pytorch
+    - pytorch::torchaudio
     - pysoundfile
-    - torchaudio
     - numpy
     - pandas
     - pip

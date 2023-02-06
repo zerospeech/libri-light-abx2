@@ -4,21 +4,31 @@ on: [push]
 
 jobs:
   build-conda:
-    name: Ex1 (${{ matrix.python-version }}, ${{ matrix.os }})
+    name: build-conda (${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.8", "3.9", "3.10"]
+        # os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        os: ["ubuntu-latest"]
+        # python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.8"]
     steps:
       - name: checkout repo
         uses: actions/checkout@v2
       - name: setup miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
-          conda-build-version: 3
+          conda-build-version: "*"
+          mamba-version: "*"
+          channels: conda-forge,pytorch,nodefaults
           python-version: ${{ matrix.python-version }}
       - name: build recipe
         shell: bash -el {0}
-        run: conda build -c conda-forge -c pytorch conda-recipe
+        run: conda build -c conda-forge -c pytorch conda-recipe --output-folder dist
+      - name: upload builds
+        uses: actions/upload-artifact@v3
+        with:
+          name: conda-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: dist
+          retention-days: 5
