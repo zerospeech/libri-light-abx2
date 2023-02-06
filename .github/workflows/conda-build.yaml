@@ -1,5 +1,7 @@
 name: Build Conda packages
 
+on: [push]
+
 jobs:
   build-conda:
     name: Ex1 (${{ matrix.python-version }}, ${{ matrix.os }})
