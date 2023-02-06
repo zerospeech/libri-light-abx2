@@ -1,0 +1,17 @@
+name: zerospeech-libriabx2
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+    - python >=3.8
+    - tqdm
+    - pytorch
+    - pysoundfile
+    - torchaudio
+    - numpy
+    - pandas
+    - pip
+    - setuptools >=45
+    - setuptools_scm[toml]>=6.2
+    - cython

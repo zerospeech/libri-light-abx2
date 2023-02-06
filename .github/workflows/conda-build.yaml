@@ -1,0 +1,20 @@
+name: Build Conda packages
+
+jobs:
+  build-conda:
+    name: Ex1 (${{ matrix.python-version }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        python-version: ["3.8", "3.9",, "3.10"]
+    steps:
+      - name: setup miniconda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          conda-build-version: 3
+          python-version: ${{ matrix.python-version }}
+      - name: build recipe
+        shell: bash -el {0}
+        run: conda build -c conda-forge -c pytorch conda-recipe
