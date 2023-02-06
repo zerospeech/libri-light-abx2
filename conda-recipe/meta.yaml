@@ -43,6 +43,7 @@ test:
     - zrc-abx2 --help
   requires:
     - pip
+    - cpuonly  # save some time downloading pytorch, maybe?
 
 about:
   home: https://pypi.org/project/zerospeech-libriabx2/
