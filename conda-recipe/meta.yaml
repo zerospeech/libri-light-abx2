@@ -43,6 +43,7 @@ test:
     - zrc-abx2 --help
   requires:
     - pip
+    - pytorch::pytorch
     - cpuonly  # save some time downloading pytorch, maybe?
 
 about:
