@@ -29,13 +29,13 @@ requirements:
   run:
     - python >=3.8
     - tqdm
-    # there's a missing symbol error when one combines the latest version of
-    # pytorch from the conda-forge channel with torchaudio from the pytorch
-    # channel. Probably some ABI compatibility. This forces the use of the
-    # pytorch package
+    # FIXME(sdrobert): there's a missing symbol error when one combines the
+    # latest version of pytorch from the conda-forge channel with torchaudio
+    # from the pytorch channel. Probably some ABI compatibility. For now, we
+    # force both to be from the same channel (pytorch)
     - pytorch::pytorch
+    - pytorch::torchaudio
     - pysoundfile
-    - torchaudio
     - pandas
     - {{ pin_compatible('numpy') }}
 
@@ -56,7 +56,3 @@ about:
   license_file:
     - LICENCE.txt
     - zrc_abx2/cpc/LICENSE
-
-extra:
-  recipe-maintainers:
-    - spro
