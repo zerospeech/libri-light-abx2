@@ -29,12 +29,8 @@ requirements:
   run:
     - python >=3.8
     - tqdm
-    # FIXME(sdrobert): there's a missing symbol error when one combines the
-    # latest version of pytorch from the conda-forge channel with torchaudio
-    # from the pytorch channel. Probably some ABI compatibility. For now, we
-    # force both to be from the same channel (pytorch)
-    - pytorch::pytorch
-    - pytorch::torchaudio
+    - pytorch
+    - torchaudio
     - pysoundfile
     - pandas
     - {{ pin_compatible('numpy') }}
@@ -47,6 +43,7 @@ test:
     - zrc-abx2 --help
   requires:
     - pip
+    - pytorch::pytorch
 
 about:
   home: https://pypi.org/project/zerospeech-libriabx2/
