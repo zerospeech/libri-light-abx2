@@ -47,7 +47,7 @@ test:
     # even using the pytorch of the correct version from conda-forge yields a
     # linker error. Let's avoid that in testing here.
     - pytorch::pytorch 1.13.1
-    - pythorch::torchaudio 0.13.1
+    - pytorch::torchaudio 0.13.1
 
 about:
   home: https://pypi.org/project/zerospeech-libriabx2/
