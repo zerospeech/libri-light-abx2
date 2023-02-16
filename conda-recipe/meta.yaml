@@ -10,7 +10,6 @@ source:
   sha256: 944fd001e5c04cbcf4e2dea5b24701f268610cae55c6ca880b5a5b9f840dbc5e
 
 build:
-  noarch: python
   skip: true  # [py<38]
   entry_points:
     - zrc-abx2 = zrc_abx2.eval_ABX:main
