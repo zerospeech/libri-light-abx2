@@ -2,6 +2,9 @@ name: Build Conda packages
 
 on: workflow_dispatch
 
+env:
+  ANACONDA_USERNAME: ${{ vars.ANACONDA_USERNAME }}
+
 jobs:
   build-conda:
     name: build-conda (${{ matrix.python-version }}, ${{ matrix.os }})
