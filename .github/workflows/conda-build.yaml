@@ -29,10 +29,19 @@ jobs:
       - name: build recipe
         shell: bash -el {0}
         run: conda build -c conda-forge -c pytorch conda-recipe --output-folder dist --python=${{ matrix.python-version }} --numpy=${{ matrix.numpy-version }}
-      - name: upload builds
-        uses: actions/upload-artifact@v3
-        with:
-          name: conda-${{ matrix.os }}-py${{ matrix.python-version }}
-          path: dist
-          retention-days: 5
-          if-no-files-found: error
+      # - name: upload builds to github
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: conda-${{ matrix.os }}-py${{ matrix.python-version }}
+      #     path: dist
+      #     retention-days: 5
+      #     if-no-files-found: error
+      - name: upload builds to anaconda
+        shell: bash -el {0}
+        run: |
+          [ -z "$ANACONDA_USERNAME" ] && echo "ANACONDA_USERNAME missing!"
+          [ -z "${{ secrets.ANACONDA_TOKEN}}" ] && echo "ANACONDA_TOKEN missing!"
+          conda install anaconda-client
+          fs=( $(find dist -name '*.tar.bz2') )
+          echo "to upload: ${fs[*]}"
+          anaconda -t "${{ secrets.ANACONDA_TOKEN }}" upload -u "$ANACONDA_USERNAME" "${fs[@]}" --force
