@@ -1,5 +1,7 @@
 # libri-light-abx2
 
+[![PyPI version](https://badge.fury.io/py/zerospeech-libriabx2.svg)](https://badge.fury.io/py/zerospeech-libriabx2) [![Upload Python Package](https://github.com/zerospeech/libri-light-abx2/actions/workflows/pipy-publish.yaml/badge.svg)](https://github.com/zerospeech/libri-light-abx2/actions/workflows/pipy-publish.yaml)
+
 The ABX phonetic evaluation metric for unsupervised representation learning as used by the ZeroSpeech challenge, now with context-type options (on-triphone, within-context, any-context). This module is a reworking of https://github.com/zerospeech/libri-light-abx, which in turn is a wrapper around https://github.com/facebookresearch/libri-light/tree/main/eval
 
   
