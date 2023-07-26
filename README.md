@@ -15,9 +15,6 @@ Or you can install from source by cloning this repository and running:
 
 `pip install .`
 
-As the final alternative, you can install into a conda environment by running:
-
-`conda install -c conda-forge -c pytorch -c coml zerospeech-libriabx2 pytorch::pytorch`
 
 ### Usage
 ### From command line
