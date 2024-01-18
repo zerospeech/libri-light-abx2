@@ -4,6 +4,7 @@ from typing import Callable, Union
 
 import numpy as np
 import torch
+from tqdm import tqdm
 
 import libri_light_dtw as dtw
 from .ABXIterators.abx_iterators_anycontext import *
@@ -159,7 +160,7 @@ def get_abx_scores_dtw_on_group(group_iterator: Union[ABXWithinGroupIterator, AB
 
     with torch.no_grad():
         # See the iterator's def __iter__(self) for details
-        for _, group in enumerate(group_iterator):
+        for group in tqdm(group_iterator):
 
             coords, abx = loc_dtw(group, distance_function, symmetric, pooling)
             data_list.append(abx)
