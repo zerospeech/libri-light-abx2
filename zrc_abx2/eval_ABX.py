@@ -107,7 +107,7 @@ def _loadCPCFeatureMaker(
 
 class EvalABX:
     # INTERFACE
-    def eval_abx(self, args: EvalArgs) -> List[Dict[str, Any]]:
+    def eval_abx(self, args: EvalArgs, show_progress: bool = False) -> List[Dict[str, Any]]:
         print("eval_ABX args:")
         print(args)
         if args.path_checkpoint is None:
@@ -165,6 +165,7 @@ class EvalABX:
             cuda=args.cuda,
             max_x_across=args.max_x_across,
             max_size_group=args.max_size_group,
+            show_progress=show_progress,
         )
 
         return self.formatted_abx_results(scores, args)
@@ -216,6 +217,7 @@ class EvalABX:
         cuda=False,
         max_x_across=5,
         max_size_group=30,
+        show_progress=False,
     ) -> Dict[str, float]:
         # Distance function
         distance_function = abx_g.get_distance_function_from_name(distance_mode)
@@ -261,7 +263,7 @@ class EvalABX:
                     ABXDataset, contextmode, "within", max_size_group, seed_n
                 )
                 group_confusion = abx_g.get_abx_scores_dtw_on_group(
-                    ABXIterator, distance_function, ABXIterator.symmetric, pooling
+                    ABXIterator, distance_function, ABXIterator.symmetric, pooling, show_progress
                 )
 
                 n_data = group_confusion._values().size(0)
@@ -307,7 +309,7 @@ class EvalABX:
                 )
                 ABXIterator.max_x = max_x_across # Only used in across-speaker
                 group_confusion = abx_g.get_abx_scores_dtw_on_group(
-                    ABXIterator, distance_function, ABXIterator.symmetric, pooling
+                    ABXIterator, distance_function, ABXIterator.symmetric, pooling, show_progress
                 )
                 n_data = group_confusion._values().size(0)
                 index_ = torch.sparse.LongTensor(
@@ -510,7 +512,7 @@ def main(argv=None):
         strict=args.strict,
     )
     abx_evaluator = EvalABX()
-    scores = abx_evaluator.eval_abx(eval_args)
+    scores = abx_evaluator.eval_abx(eval_args, show_progress=True)
 
     if eval_args.out:
         out_dir = Path(eval_args.out)

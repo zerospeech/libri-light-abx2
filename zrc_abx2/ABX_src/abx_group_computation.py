@@ -153,14 +153,14 @@ def loc_dtw(data,
 # 4 different classes right now)
 def get_abx_scores_dtw_on_group(group_iterator: Union[ABXWithinGroupIterator, ABXAcrossGroupIterator, ABXWithinGroupIteratorAnyContext, ABXAcrossGroupIteratorAnyContext],
                                 distance_function: Callable[..., torch.Tensor],
-                                symmetric: bool, pooling: Pooling):
+                                symmetric: bool, pooling: Pooling, show_progress: bool):
 
     data_list = []
     coords_list = []
 
     with torch.no_grad():
         # See the iterator's def __iter__(self) for details
-        for group in tqdm(group_iterator):
+        for group in tqdm(group_iterator, disable=not show_progress):
 
             coords, abx = loc_dtw(group, distance_function, symmetric, pooling)
             data_list.append(abx)
